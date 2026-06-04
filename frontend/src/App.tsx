@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDemoStore } from './store/demoStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useAutoPlay } from './hooks/useAutoPlay';
+import { useCXASAgent } from './hooks/useCXASAgent';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { Homepage } from './components/pages/Homepage';
@@ -37,6 +39,20 @@ export default function App() {
   useKeyboardShortcuts();
   useAutoPlay();
   const channel = useDemoStore((s) => s.channel);
+
+  // Probe the backend once on load so the presenter's live-mode toggle reflects
+  // whether the CXAS bridge is actually reachable (lights the liveAvailable dot).
+  const setLiveAvailable = useDemoStore((s) => s.setLiveAvailable);
+  const { checkHealth } = useCXASAgent();
+  useEffect(() => {
+    let cancelled = false;
+    void checkHealth().then((ok) => {
+      if (!cancelled) setLiveAvailable(ok);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [checkHealth, setLiveAvailable]);
 
   return (
     <div className="flex min-h-full flex-col bg-bc-gray-100">

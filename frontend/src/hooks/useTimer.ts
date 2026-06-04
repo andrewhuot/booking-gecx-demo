@@ -4,7 +4,9 @@ import { useDemoStore } from '../store/demoStore';
 // Returns elapsed mm:ss since the first interaction (timerStart). 00:00 until then.
 export function useTimer(): string {
   const timerStart = useDemoStore((s) => s.timerStart);
-  const [now, setNow] = useState(Date.now());
+  // Lazy initializer: Date.now() runs once at mount, not on every render (which
+  // keeps render pure). The effect then ticks it every second.
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (timerStart == null) return;
