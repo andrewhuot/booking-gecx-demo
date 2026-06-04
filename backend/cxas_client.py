@@ -9,8 +9,9 @@ release is a one-file edit. Every method either degrades gracefully (``health``,
 ``start_session``) or raises a single typed exception (:class:`CXASUnavailable`)
 that the API layer catches to guarantee it never 500s on a CXAS outage.
 
-Live mode is enabled: project ``decent-courage-233916`` has the CES API
-(``ces.googleapis.com``) enabled and ADC credentials work, so real CXAS calls
+Live mode targets whatever GCP project ``.env`` configures (``GCP_PROJECT_ID`` /
+``CXAS_APP_NAME`` — see the README). Given that project has the CES API
+(``ces.googleapis.com``) enabled and ADC credentials work, real CXAS calls
 succeed once the agent is provisioned (``scripts/create_agent.py`` →
 ``CXAS_APP_NAME`` in ``.env``). The main practical limit is the project's
 ``RunSession LLM tokens`` quota (1000/min/region by default); this client paces
@@ -130,11 +131,20 @@ class CXASClient:
     # ------------------------------------------------------------------ #
     @property
     def app_name(self) -> str:
-        """Full CXAS app resource path, from config or derived from the project."""
+        """Full CXAS app resource path from ``CXAS_APP_NAME``.
+
+        Raises :class:`CXASUnavailable` (with a clear, actionable message) when it
+        is unset, rather than fabricating a path that would target the wrong or a
+        nonexistent project. Set it by running ``scripts/create_agent.py``, which
+        provisions the agent and writes ``CXAS_APP_NAME`` back into ``.env``.
+        """
         if self._settings.cxas_app_name:
             return self._settings.cxas_app_name
-        # Best-effort default so partial config still produces a usable path.
-        return f"{self._settings.app_parent}/apps/booking-demo"
+        raise CXASUnavailable(
+            "CXAS_APP_NAME is not set. Provision the agent for your project with "
+            "`python scripts/create_agent.py` (it writes CXAS_APP_NAME into .env), "
+            "or set CXAS_APP_NAME to an existing app resource path."
+        )
 
     # ------------------------------------------------------------------ #
     # Public surface
@@ -144,8 +154,9 @@ class CXASClient:
 
         Returns ``{"cxas_reachable": bool, "reason": str}``. Attempts a cheap
         ``list_agents`` call against the configured app and catches *everything*
-        (import, auth, billing 403, connection) — turning failures into a
-        ``reachable=False`` result with a human-readable reason. Never raises.
+        (unset config, import, auth/permission, rate-limit, connection) — turning
+        failures into a ``reachable=False`` result with a human-readable reason.
+        Never raises.
         """
         try:
             from cxas_scrapi import Agents  # lazy import
@@ -206,6 +217,9 @@ class CXASClient:
         except TypeError:
             # Older SDKs without a rate_limiter kwarg: construct without it.
             sessions = Sessions(app_name=self.app_name)
+        except CXASUnavailable:
+            # e.g. CXAS_APP_NAME unset — surface its clear message verbatim.
+            raise
         except Exception as exc:  # noqa: BLE001
             raise CXASUnavailable(_humanize_error(exc)) from exc
 

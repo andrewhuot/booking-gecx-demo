@@ -29,3 +29,7 @@ service-account.json
 # Build artifacts
 frontend/dist/
 agent/.exported/
+
+# Per-deployment record written by scripts/create_agent.py (project-specific).
+# Tracked template: agent/agent_config.example.json
+agent/agent_config.json
