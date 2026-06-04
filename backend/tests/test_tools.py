@@ -114,3 +114,25 @@ def test_check_availability_returns_room_and_nav_data():
     assert payload["action"] == "check_availability"
     assert payload["data"]["property_id"] == "enchantment-resort"
     assert payload["data"]["room_id"] == "canyon-view-suite"
+
+
+def test_create_booking_returns_confirmation_card_payload():
+    t = _tool("create_booking")
+    out = t.create_booking(
+        property_id="enchantment-resort", room_id="canyon-view-suite",
+        check_in="2025-10-16", check_out="2025-10-19",
+        guest_name="Rachel Nguyen", payment_method="Visa on file")
+    assert out["success"] is True
+    assert out["confirmation_number"].startswith("BK-")
+    # Deterministic: same inputs -> same number.
+    again = t.create_booking(
+        property_id="enchantment-resort", room_id="canyon-view-suite",
+        check_in="2025-10-16", check_out="2025-10-19",
+        guest_name="Rachel Nguyen", payment_method="Visa on file")
+    assert out["confirmation_number"] == again["confirmation_number"]
+    card = out["payload"]["card"]
+    assert card["type"] == "confirmation"
+    assert card["nights"] == 3
+    assert card["total"] == "$1,017"
+    assert card["status"] == "Confirmed"
+    assert out["payload"]["action"] == "create_booking"
