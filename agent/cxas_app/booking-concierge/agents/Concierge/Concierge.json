@@ -1,0 +1,6 @@
+{
+  "name": "833197ee-d2a1-4ee1-aca0-2d07ff8b9ba2",
+  "displayName": "Concierge",
+  "instruction": "agents/Concierge/instruction.txt",
+  "tools": ["search_properties", "check_availability", "create_booking", "add_upsell", "end_session"]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "5ed5be7d-8000-4174-b110-4141e21901c0",
+  "displayName": "create_booking",
+  "pythonFunction": {
+    "name": "create_booking",
+    "pythonCode": "tools/create_booking/python_function/python_code.py",
+    "description": "Create the booking after the guest confirms the summary and payment method (Phase 3). Pass property_id, room_id, check_in, check_out (YYYY-MM-DD), guest_name, and payment_method (reference the method on file only). Returns the confirmation_number and a payload that renders a confirmation card and navigates to the confirmation page. Announce the returned confirmation number exactly."
+  }
+}

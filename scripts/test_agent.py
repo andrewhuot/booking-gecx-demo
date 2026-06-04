@@ -6,16 +6,27 @@ upsell) against the LIVE CXAS agent via the backend ``CXASClient``, printing eac
 agent reply and the parsed structured payload mapped into the frontend's card /
 site_action shapes.
 
-This is the live smoke test for when billing is enabled. Until then it catches
-CXAS-unavailability and prints the billing-blocked notice instead of crashing.
+This is the live smoke test against the provisioned CXAS agent. It catches
+CXAS-unavailability (rate-limit/permission/connection) and prints a clear notice
+instead of crashing.
+
+NOTE ON QUOTA: the project's ``RunSession LLM tokens`` quota is per-minute and
+the concierge prompt is large, so running every scenario's turns back-to-back can
+hit ``429`` rate limits. ``CXASClient.run_turn`` retries 429s with backoff; this
+script also paces turns. Pass ``--scenario rachel`` (default runs only the first
+scenario) to keep token usage modest. Request a quota increase for
+``ces.googleapis.com`` to run the full suite at speed.
 
 Run:  backend/.venv/bin/python scripts/test_agent.py
+      backend/.venv/bin/python scripts/test_agent.py --all   # all 3 scenarios
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
 # Make the repo root importable so ``backend`` resolves when run as a script.
@@ -26,21 +37,28 @@ if str(REPO_ROOT) not in sys.path:
 from backend.cxas_client import CXASClient, CXASUnavailable  # noqa: E402
 from backend.mapping import map_structured_response  # noqa: E402
 
+# Short slug -> human label, so `--scenario rachel` works on the CLI.
+SCENARIO_LABELS: dict[str, str] = {
+    "rachel": "Rachel (web chat)",
+    "david": "David (voice call)",
+    "melissa": "Melissa (mobile chat)",
+}
+
 # Each scenario is a list of (channel, user_message) turns that walk the funnel.
 GOLDEN_SCENARIOS: dict[str, list[tuple[str, str]]] = {
-    "Rachel (web chat)": [
+    "rachel": [
         ("chat", "I need a vacation. Something relaxing, not a big city. Maybe a few days?"),
         ("chat", "US. Spa and wellness, 100%. Budget around $250-400 a night."),
         ("chat", "Yes - Thursday to Sunday next week. Rachel Nguyen, Visa on file."),
         ("chat", "Add the spa package."),
     ],
-    "David (voice call)": [
+    "david": [
         ("voice", "My anniversary is coming up and I want to plan something special, nothing too far from Austin."),
         ("voice", "Pampered - my wife wants a real spa trip. Under five hundred a night."),
         ("voice", "Our anniversary is November 8th, Friday through Sunday. Book it to my Genius Visa."),
         ("voice", "Add the couples package."),
     ],
-    "Melissa (mobile chat)": [
+    "melissa": [
         ("mobile", "I need a solo reset - work has been nonstop. Something immersive and wellness-focused."),
         ("mobile", "Two weeks from now, Wednesday through Friday. Up to $350 a night."),
         ("mobile", "Book it to my Mastercard on file."),
@@ -62,8 +80,8 @@ def _print_turn(turn_no: int, channel: str, user_message: str, structured: dict)
     print()
 
 
-def run() -> int:
-    """Execute the golden scenarios; never crash if CXAS is unavailable."""
+def run(scenarios: dict[str, list[tuple[str, str]]], pace_seconds: float) -> int:
+    """Execute the given scenarios; never crash if CXAS is unavailable."""
     client = CXASClient()
 
     # Quick reachability probe so we fail fast with a clear message.
@@ -71,13 +89,13 @@ def run() -> int:
     print(f"CXAS health: reachable={status['cxas_reachable']} — {status['reason']}\n")
     if not status["cxas_reachable"]:
         print("Skipping live scenarios: CXAS is not reachable (see reason above).")
-        print("Once billing is enabled and the agent is provisioned, rerun this script.")
+        print("Provision the agent (scripts/create_agent.py) and ensure ADC creds, then rerun.")
         return 0
 
     overall_ok = True
-    for name, turns in GOLDEN_SCENARIOS.items():
+    for name, turns in scenarios.items():
         print("=" * 78)
-        print(f"  SCENARIO: {name}")
+        print(f"  SCENARIO: {SCENARIO_LABELS.get(name, name)}")
         print("=" * 78)
         try:
             session_id = client.start_session()
@@ -85,10 +103,13 @@ def run() -> int:
             for i, (channel, message) in enumerate(turns, start=1):
                 structured = client.run_turn(session_id=session_id, text=message, channel=channel)
                 _print_turn(i, channel, message, structured)
+                # Pace turns to respect the per-minute LLM-token quota.
+                if pace_seconds > 0 and i < len(turns):
+                    time.sleep(pace_seconds)
         except CXASUnavailable as exc:
             overall_ok = False
             print(f"  ! CXAS unavailable mid-scenario: {exc.reason}")
-            print("  Stopping scenarios; rerun after billing is enabled.\n")
+            print("  Stopping scenarios; wait for the quota window or raise the quota, then rerun.\n")
             break
 
     print("=" * 78)
@@ -97,5 +118,30 @@ def run() -> int:
     return 0
 
 
+def main() -> int:
+    """Parse args and run the smoke test (one scenario by default)."""
+    parser = argparse.ArgumentParser(description="Live CXAS smoke test for the concierge agent.")
+    parser.add_argument("--all", action="store_true", help="Run all three golden scenarios.")
+    parser.add_argument(
+        "--scenario",
+        choices=list(GOLDEN_SCENARIOS.keys()),
+        help="Run a single named scenario (default: the first scenario).",
+    )
+    parser.add_argument(
+        "--pace-seconds", type=float, default=20.0,
+        help="Seconds to wait between turns to respect the per-minute token quota.",
+    )
+    args = parser.parse_args()
+
+    if args.all:
+        scenarios = GOLDEN_SCENARIOS
+    elif args.scenario:
+        scenarios = {args.scenario: GOLDEN_SCENARIOS[args.scenario]}
+    else:
+        first = next(iter(GOLDEN_SCENARIOS))
+        scenarios = {first: GOLDEN_SCENARIOS[first]}
+    return run(scenarios, pace_seconds=args.pace_seconds)
+
+
 if __name__ == "__main__":
-    sys.exit(run())
+    sys.exit(main())
