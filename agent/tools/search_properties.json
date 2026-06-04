@@ -1,0 +1,73 @@
+{
+  "name": "search_properties",
+  "description": "Find the best-fit Sedona property for a traveler given their desired vibe, budget, dates, and party. Returns a ranked list of matches; the agent presents the single best one. Use this in the Personalized Matching phase to ground a recommendation in real data instead of inventing it.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "location": {
+        "type": "string",
+        "description": "Destination or region. For this demo, always 'Sedona, AZ'.",
+        "default": "Sedona, AZ"
+      },
+      "vibe": {
+        "type": "string",
+        "description": "The feel of the trip the guest wants.",
+        "enum": ["spa_wellness", "romance_couples", "solo_reset", "nature_hiking", "value", "unique_design"]
+      },
+      "budget_per_night": {
+        "type": "number",
+        "description": "Upper bound of the guest's nightly budget in USD."
+      },
+      "check_in": {
+        "type": "string",
+        "description": "Desired check-in date (YYYY-MM-DD) or a loose phrase like 'next week'."
+      },
+      "check_out": {
+        "type": "string",
+        "description": "Desired check-out date (YYYY-MM-DD) or loose phrase."
+      },
+      "party": {
+        "type": "string",
+        "description": "Who is traveling.",
+        "enum": ["solo", "couple", "anniversary", "family", "group"]
+      }
+    },
+    "required": ["vibe"]
+  },
+  "returns": {
+    "description": "A ranked match list plus a structured payload that renders a property card and highlights the property in search results. The agent presents matches[0]. Expected shape:",
+    "type": "object",
+    "example": {
+      "matches": [
+        {
+          "id": "enchantment-resort",
+          "name": "Enchantment Resort",
+          "location": "Boynton Canyon, Sedona, AZ",
+          "rating": 9.2,
+          "rating_label": "Wonderful",
+          "reviews": 847,
+          "nightly_rate": 340,
+          "price_unit": "/night",
+          "tags": ["Spa & Wellness", "Canyon Views", "Adults Preferred"],
+          "why": "Wellness-focused luxury inside Boynton Canyon, home to the Mii amo spa; rate sits right in a $250-400 range."
+        }
+      ],
+      "payload": {
+        "action": "search_properties",
+        "card": {
+          "type": "property",
+          "id": "enchantment-resort",
+          "name": "Enchantment Resort",
+          "location": "Boynton Canyon, Sedona, AZ",
+          "rating": 9.2,
+          "ratingLabel": "Wonderful",
+          "reviews": 847,
+          "price": "$340",
+          "priceUnit": "/night",
+          "tags": ["Spa & Wellness", "Canyon Views", "Adults Preferred"],
+          "cta": "Check Availability"
+        }
+      }
+    }
+  }
+}

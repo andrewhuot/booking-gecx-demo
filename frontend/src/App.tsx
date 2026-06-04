@@ -46,8 +46,9 @@ export default function App() {
       </main>
       <Footer />
 
-      {/* Agent channels — chat widget is always available on desktop */}
-      <ChatWidget />
+      {/* Agent channels — the desktop chat widget is the default surface, but it
+          steps aside when a voice call or the mobile frame takes over the demo. */}
+      {channel !== 'voice' && channel !== 'mobile' && <ChatWidget />}
       {channel === 'voice' && <VoiceModal />}
       {channel === 'mobile' && <MobileFrame />}
 

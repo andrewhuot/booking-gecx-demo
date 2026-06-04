@@ -1,0 +1,44 @@
+{
+  "name": "check_availability",
+  "description": "Check real availability, the best-fit room, the nightly rate, the number of nights, and the total for a property over specific dates. Use this in the Frictionless Checkout phase before quoting any total. The agent must read the returned rate, nights, and total back verbatim — never estimate them.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "property_id": {
+        "type": "string",
+        "description": "The property identifier returned by search_properties, e.g. 'enchantment-resort', 'lauberge-sedona', 'mii-amo'."
+      },
+      "check_in": {
+        "type": "string",
+        "description": "Check-in date in YYYY-MM-DD."
+      },
+      "check_out": {
+        "type": "string",
+        "description": "Check-out date in YYYY-MM-DD."
+      }
+    },
+    "required": ["property_id", "check_in", "check_out"]
+  },
+  "returns": {
+    "description": "Availability plus room/rate/nights/total and a payload that navigates the site to the property page with the room pre-selected. No inline card is rendered for availability. Expected shape:",
+    "type": "object",
+    "example": {
+      "available": true,
+      "property_id": "enchantment-resort",
+      "property_name": "Enchantment Resort",
+      "room_id": "canyon-view-suite",
+      "room_name": "Canyon View Suite",
+      "nightly_rate": 339,
+      "nights": 3,
+      "total": 1017,
+      "currency": "USD",
+      "payload": {
+        "action": "check_availability",
+        "data": {
+          "property_id": "enchantment-resort",
+          "room_id": "canyon-view-suite"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "provisioned": false,
+  "note": "Provisioning blocked (billing not enabled or CXAS unavailable). Intended config preserved; rerun after billing is linked.",
+  "project_id": "decent-courage-233916",
+  "project_number": "1078946815141",
+  "location": "us",
+  "app_id": "booking-demo",
+  "app_display_name": "Booking.com Demo",
+  "app_name": null,
+  "agent_id": "concierge",
+  "agent_display_name": "Booking.com Concierge",
+  "agent_name": null,
+  "model": "gemini-2.5-flash",
+  "instruction_path": "agent/instructions.txt",
+  "tool_files": [
+    "agent/tools/search_properties.json",
+    "agent/tools/check_availability.json",
+    "agent/tools/create_booking.json",
+    "agent/tools/add_upsell.json"
+  ],
+  "registered_tools": [],
+  "guardrails_path": "agent/guardrails/system_guardrails.txt",
+  "guardrail_name": null
+}
