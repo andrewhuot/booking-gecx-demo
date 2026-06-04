@@ -41,7 +41,11 @@ def search_properties(
         budget = float(budget_per_night or 0)
     except (TypeError, ValueError):
         budget = 0.0
-    prop = data.pick_property(vibe=vibe, budget_per_night=budget)
+    try:
+        prop = data.pick_property(vibe=vibe, budget_per_night=budget)
+    except Exception as exc:
+        return {"success": False, "error": str(exc),
+                "agent_action": "Apologize that the property search is temporarily unavailable and ask the guest to try again in a moment."}
     card = {
         "type": "property",
         "id": prop["id"],

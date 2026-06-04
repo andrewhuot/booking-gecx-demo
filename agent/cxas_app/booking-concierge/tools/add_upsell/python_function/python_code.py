@@ -31,7 +31,11 @@ def add_upsell(
       Dict with updated_total, success, and a payload that renders a
       confirmation-update card and updates the confirmation on the site.
     """
-    prop = data.BY_ID.get(property_id)
+    try:
+        prop = data.BY_ID.get(property_id)
+    except Exception as exc:
+        return {"success": False, "error": str(exc),
+                "agent_action": "Apologize that the add-on could not be applied right now and let the guest know their booking is still confirmed."}
     addon = prop["addon"] if prop else {
         "name": "Add-on", "description": "", "price": 0, "price_context": ""}
     try:

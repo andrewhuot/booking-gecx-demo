@@ -48,9 +48,14 @@ def create_booking(
       Dict with confirmation_number, success, and a payload that renders a
       confirmation card and navigates to the confirmation page.
     """
-    prop = data.BY_ID.get(property_id)
+    try:
+        prop = data.BY_ID.get(property_id)
+    except Exception as exc:
+        return {"success": False, "error": str(exc),
+                "agent_action": "Apologize that the booking system is temporarily unavailable and ask the guest to try again shortly."}
     if not prop:
-        return {"success": False, "error": "unknown_property", "property_id": property_id}
+        return {"success": False, "error": "unknown_property", "property_id": property_id,
+                "agent_action": "Inform the guest the selected property could not be found and offer to search for alternatives."}
     rooms = prop["rooms"]
     room = next((r for r in rooms if r["id"] == room_id), rooms[0])
     nights = data.nights_between(check_in, check_out)

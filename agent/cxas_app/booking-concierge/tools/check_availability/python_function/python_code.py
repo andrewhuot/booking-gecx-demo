@@ -31,9 +31,14 @@ def check_availability(
       Dict with room, nightly_rate, nights, total, success, and a payload that
       navigates to the property page and pre-selects the room.
     """
-    prop = data.BY_ID.get(property_id)
+    try:
+        prop = data.BY_ID.get(property_id)
+    except Exception as exc:
+        return {"success": False, "error": str(exc),
+                "agent_action": "Apologize that availability cannot be checked right now and ask the guest to try again."}
     if not prop:
-        return {"success": False, "error": "unknown_property", "property_id": property_id}
+        return {"success": False, "error": "unknown_property", "property_id": property_id,
+                "agent_action": "Inform the guest the selected property could not be found and offer to search again."}
     rooms = prop["rooms"]
     room = next((r for r in rooms if r["id"] == room_id), rooms[0])
     nights = data.nights_between(check_in, check_out)

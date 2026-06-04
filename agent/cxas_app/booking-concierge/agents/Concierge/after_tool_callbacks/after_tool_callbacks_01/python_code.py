@@ -12,15 +12,15 @@ from typing import Any, Optional
 
 
 def after_tool_callback(
-    tool,
-    tool_input: dict[str, Any],
-    callback_context,
-    tool_response: Any,
-) -> Optional[dict]:
+    tool: Tool,  # noqa: F821 — injected by CES at runtime
+    input: dict[str, Any],
+    callback_context: CallbackContext,  # noqa: F821 — injected by CES at runtime
+    tool_response: dict[str, Any],
+) -> Optional[dict[str, Any]]:
     """Emit tool_response['payload'] as a JSON response payload, if present."""
     try:
         result = tool_response.get("result", tool_response) if isinstance(
-            tool_response, dict) else tool_response
+            tool_response, dict) else {}
         payload = result.get("payload") if isinstance(result, dict) else None
         if not payload:
             return None
