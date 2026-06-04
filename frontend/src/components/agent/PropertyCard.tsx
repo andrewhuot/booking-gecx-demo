@@ -41,16 +41,21 @@ export function PropertyCard({ data }: PropertyCardProps) {
           </p>
           <div className="flex shrink-0 items-center gap-1.5">
             <div className="flex flex-col items-end leading-tight">
-              <span className="text-[11px] font-bold text-bc-gray-900">
-                {data.ratingLabel}
-              </span>
+              {data.ratingLabel && (
+                <span className="text-[11px] font-bold text-bc-gray-900">
+                  {data.ratingLabel}
+                </span>
+              )}
               {data.reviews != null && (
                 <span className="text-[10px] text-bc-gray-500">
                   {data.reviews.toLocaleString()} reviews
                 </span>
               )}
             </div>
-            <span className="bc-rating">{data.rating.toFixed(1)}</span>
+            {/* Live agent data can omit a numeric rating — guard before formatting. */}
+            {typeof data.rating === 'number' && (
+              <span className="bc-rating">{data.rating.toFixed(1)}</span>
+            )}
           </div>
         </div>
 
