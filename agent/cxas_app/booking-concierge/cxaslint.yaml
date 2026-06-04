@@ -1,4 +1,0 @@
-# Lint configuration for the Booking.com Concierge CXAS app.
-ignore:
-  - "tools/_shared"
-  - "tools/_shared/**"

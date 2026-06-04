@@ -1,16 +1,43 @@
-"""Apply a contextual add-on to a booking and return an updated-total payload."""
+"""Apply a contextual add-on to a booking and return an updated-total payload.
+
+Self-contained: CES executes each tool in isolation and `cxas push` does not
+bundle shared sibling modules under tools/, so the add-on data and helper are
+embedded here. Add-ons mirror the per-property add-ons used across the demo.
+"""
 from __future__ import annotations
 
-import os
-import sys
 from typing import Any
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "_shared"))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-try:
-    from _shared import data  # type: ignore
-except Exception:  # pragma: no cover
-    import data  # type: ignore
+# property id -> its one contextual add-on.
+_ADDONS: dict[str, dict[str, Any]] = {
+    "enchantment-resort": {"id": "spa-package", "name": "Mii amo Spa Package",
+                           "description": "Two 80-minute treatments plus daily guided meditation.",
+                           "price": 475, "price_context": "for your stay"},
+    "lauberge-sedona": {"id": "couples-package", "name": "Couples Spa Package",
+                        "description": "Side-by-side creekside massages and a private dinner.",
+                        "price": 525, "price_context": "for two"},
+    "mii-amo": {"id": "intention-session", "name": "Intention-Setting Session",
+                "description": "A private one-on-one consult to shape your journey.",
+                "price": 180, "price_context": "one-time"},
+    "amara-resort": {"id": "spa-credit", "name": "Spa Credit",
+                     "description": "A $150 credit toward any spa treatment.",
+                     "price": 150, "price_context": "credit"},
+    "ambiente-hotel": {"id": "stargazing", "name": "Private Stargazing Experience",
+                       "description": "A guided rooftop-deck astronomy session.",
+                       "price": 220, "price_context": "for two"},
+    "sedona-rouge": {"id": "rooftop-dinner", "name": "Rooftop Dinner for Two",
+                     "description": "A sunset three-course dinner on the terrace.",
+                     "price": 160, "price_context": "for two"},
+}
+
+_DEFAULT_ADDON: dict[str, Any] = {
+    "name": "Add-on", "description": "", "price": 0, "price_context": ""}
+
+
+def _fmt_price(value: float) -> str:
+    """Format a number as a display price string, e.g. 1155 -> '$1,155'."""
+    n = float(value)
+    return f"${int(n):,}" if n.is_integer() else f"${n:,.2f}"
 
 
 def add_upsell(
@@ -31,13 +58,13 @@ def add_upsell(
       Dict with updated_total, success, and a payload that renders a
       confirmation-update card and updates the confirmation on the site.
     """
-    try:
-        prop = data.BY_ID.get(property_id)
-    except Exception as exc:
-        return {"success": False, "error": str(exc),
-                "agent_action": "Apologize that the add-on could not be applied right now and let the guest know their booking is still confirmed."}
-    addon = prop["addon"] if prop else {
-        "name": "Add-on", "description": "", "price": 0, "price_context": ""}
+    if not confirmation_number:
+        return {
+            "success": False,
+            "error": "missing_confirmation_number",
+            "agent_action": "Let the guest know the add-on can only be applied to a confirmed booking, then confirm the booking first.",
+        }
+    addon = _ADDONS.get(property_id, _DEFAULT_ADDON)
     try:
         base = float(current_total or 0)
     except (TypeError, ValueError):
@@ -47,8 +74,8 @@ def add_upsell(
         "type": "confirmation_update",
         "confirmationNumber": confirmation_number,
         "addOn": addon["name"],
-        "addOnPrice": data.fmt_price(addon["price"]),
-        "updatedTotal": data.fmt_price(updated),
+        "addOnPrice": _fmt_price(addon["price"]),
+        "updatedTotal": _fmt_price(updated),
         "status": "Updated",
     }
     return {
