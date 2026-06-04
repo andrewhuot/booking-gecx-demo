@@ -39,3 +39,45 @@ def test_property_prices_match_frontend():
     assert by_id["lauberge-sedona"]["nightly_rate"] == 465
     assert by_id["mii-amo"]["nightly_rate"] == 325
     assert by_id["sedona-rouge"]["nightly_rate"] == 189
+
+
+def test_pick_property_respects_vibe_and_budget():
+    d = _data()
+    # spa_wellness top pick is enchantment-resort when budget allows.
+    assert d.pick_property(vibe="spa_wellness", budget_per_night=400)["id"] == "enchantment-resort"
+    # Under a tight budget, falls to the first in-budget ranked property (mii-amo @325).
+    assert d.pick_property(vibe="spa_wellness", budget_per_night=330)["id"] == "mii-amo"
+    # No vibe -> returns a valid property (first overall).
+    assert d.pick_property()["id"] in {p["id"] for p in d.PROPERTIES}
+    # Budget of 0 means "no limit" -> top ranked, not filtered out.
+    assert d.pick_property(vibe="romance_couples", budget_per_night=0)["id"] == "lauberge-sedona"
+
+
+def test_fmt_price_formats_whole_and_fractional():
+    d = _data()
+    assert d.fmt_price(339) == "$339"
+    assert d.fmt_price(1017) == "$1,017"
+    assert d.fmt_price(1017.5) == "$1,017.50"
+
+
+def test_nights_between_counts_and_defaults():
+    d = _data()
+    assert d.nights_between("2025-10-16", "2025-10-19") == 3
+    assert d.nights_between("2025-11-07", "2025-11-09") == 2
+    # Unparseable / empty -> safe default of 3.
+    assert d.nights_between("", "") == 3
+    assert d.nights_between("not-a-date", "also-bad") == 3
+    # Non-positive span -> default 3.
+    assert d.nights_between("2025-10-19", "2025-10-16") == 3
+
+
+def test_confirmation_number_deterministic_and_formatted():
+    d = _data()
+    a = d.confirmation_number("enchantment-resort", "canyon-view-suite", "2025-10-16", "2025-10-19", "Rachel Nguyen")
+    b = d.confirmation_number("enchantment-resort", "canyon-view-suite", "2025-10-16", "2025-10-19", "Rachel Nguyen")
+    assert a == b  # deterministic across calls
+    assert a.startswith("BK-") and len(a) == 10  # 'BK-' + 7 digits
+    assert a[3:].isdigit()
+    # Different inputs -> (almost certainly) different code.
+    c = d.confirmation_number("mii-amo", "canyon-suite-ai", "2025-06-18", "2025-06-20", "Melissa")
+    assert c != a
