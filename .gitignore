@@ -10,6 +10,12 @@ __pycache__/
 .venv/
 venv/
 *.egg-info/
+.pytest_cache/
+
+# Test / browser-automation artifacts
+.playwright-mcp/
+frontend/.playwright-mcp/
+live-chat-card.png
 
 # Env / secrets
 .env
