@@ -55,12 +55,17 @@ backend/.venv/bin/python -m uvicorn backend.api:app --port 8000
 cd frontend && npm install && npm run dev
 ```
 
-Open the URL Vite prints (typically **http://localhost:3000**).
+Open the URL Vite prints (**http://localhost:3000**). The backend serves on
+**http://localhost:8000** and starts in scripted mode unless you set
+`DEMO_MODE=live` (or flip the toggle in the UI). Stop either server with Ctrl-C
+(or `pkill -f "uvicorn backend.api:app"` / `pkill -f vite`).
 
 - **Scripted demo:** press **⌘⇧P** for the presenter panel, pick a scenario
   (or **⌘⇧1/2/3**), and press **Space** to advance. Works with no cloud setup.
 - **Live demo:** see the next section to provision an agent, then in the presenter
-  panel flip the **scripted → live** toggle and chat with the agent.
+  panel flip the **scripted → live** toggle and chat with the agent. The toggle's
+  indicator turns green only when the backend reports CXAS reachable
+  (`GET /api/health`).
 
 Run the tests anytime (no cloud needed):
 
