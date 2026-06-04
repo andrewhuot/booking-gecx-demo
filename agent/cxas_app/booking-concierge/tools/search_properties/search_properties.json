@@ -1,0 +1,9 @@
+{
+  "name": "a97d41c7-0572-4e2f-ba08-8b08cc68085e",
+  "displayName": "search_properties",
+  "pythonFunction": {
+    "name": "search_properties",
+    "pythonCode": "tools/search_properties/python_function/python_code.py",
+    "description": "Find the single best-fit Sedona property for the traveler's vibe and budget. Call this when you are ready to recommend (Phase 2). Pass vibe (spa_wellness, romance_couples, solo_reset, nature_hiking, value, unique_design) and, if known, budget_per_night, party, check_in, check_out. Returns the best match plus a payload that renders a property card and highlights it on the site."
+  }
+}

@@ -81,3 +81,22 @@ def test_confirmation_number_deterministic_and_formatted():
     # Different inputs -> (almost certainly) different code.
     c = d.confirmation_number("mii-amo", "canyon-suite-ai", "2025-06-18", "2025-06-20", "Melissa")
     assert c != a
+
+
+def _tool(name: str):
+    return _load(TOOLS / name / "python_function" / "python_code.py", f"tool_{name}")
+
+
+def test_search_properties_returns_property_card_payload():
+    t = _tool("search_properties")
+    out = t.search_properties(vibe="spa_wellness", budget_per_night=400)
+    assert out["success"] is True
+    payload = out["payload"]
+    assert payload["action"] == "search_properties"
+    card = payload["card"]
+    assert card["type"] == "property"
+    assert card["id"] == "enchantment-resort"
+    assert card["price"] == "$339"
+    assert card["priceUnit"] == "/night"
+    assert card["cta"] == "Check Availability"
+    assert isinstance(card["tags"], list) and card["tags"]
