@@ -1,0 +1,12 @@
+{
+  "_comment": "Template only. scripts/create_agent.py writes the real, gitignored agent/agent_config.json on deploy. Values below are placeholders showing the shape.",
+  "provisioned": false,
+  "note": "Not yet provisioned. Run scripts/create_agent.py.",
+  "project_id": "YOUR_GCP_PROJECT_ID",
+  "location": "us",
+  "app_display_name": "Booking.com Concierge Demo",
+  "app_id": "booking-concierge",
+  "app_name": null,
+  "app_dir": "agent/cxas_app/booking-concierge",
+  "model": "gemini-2.5-flash"
+}

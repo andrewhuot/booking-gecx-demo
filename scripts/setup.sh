@@ -68,9 +68,11 @@ cat <<'EOF'
 ==> Setup complete. Next steps:
 
   1. (Optional) Provision the live CXAS agent — needs ADC credentials
-     (gcloud auth application-default login) and the CES API enabled. It lints
-     the app tree and pushes it, writing CXAS_APP_NAME into .env:
+     (gcloud auth application-default login) and the CES API enabled. First set
+     GCP_PROJECT_ID in .env (copy .env.example), then run — it lints the app tree,
+     pushes it, and writes CXAS_APP_NAME back into .env:
        backend/.venv/bin/python scripts/create_agent.py
+     (Targeting your own project? See README - "Point this at your own GCP project".)
 
   2. Start the backend API:
        backend/.venv/bin/python -m uvicorn backend.api:app --port 8000
