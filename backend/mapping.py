@@ -105,6 +105,35 @@ def _as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
 
 
+def _unwrap_result(value: Any) -> dict[str, Any]:
+    """Return a tool response dict, unwrapping CES's ``{"result": {...}}`` shell.
+
+    ``Sessions.get_structured_response`` reports a tool's return value under
+    ``tool_responses[i]["response"]``, and CES wraps the actual payload in a
+    ``result`` envelope (``{"result": {<tool return>}}``). Unwrap one level when
+    present so callers see the tool's real fields; tolerate the already-unwrapped
+    shape too.
+    """
+    value = _as_dict(value)
+    inner = value.get("result")
+    return inner if isinstance(inner, dict) else value
+
+
+def _payload_from_tool_responses(structured: dict[str, Any]) -> dict[str, Any]:
+    """Recover a tool-emitted custom payload from the latest tool response.
+
+    Our tools include a ``payload`` ({action, card|data}) in their return value,
+    which CES reports under ``tool_responses[i]["response"]["result"]["payload"]``.
+    Scans newest-first and returns the first payload found, else ``{}``.
+    """
+    for resp in reversed(_as_list(structured.get("tool_responses"))):
+        response = _unwrap_result(_as_dict(resp).get("response"))
+        candidate = _as_dict(response.get("payload"))
+        if candidate:
+            return candidate
+    return {}
+
+
 def _first_present(*candidates: Any, default: Any = None) -> Any:
     """Return the first candidate that is neither ``None`` nor an empty string."""
     for candidate in candidates:
@@ -193,7 +222,11 @@ def _merged_action_args(
         resp_dict = _as_dict(resp)
         name = resp_dict.get("action", "")
         if isinstance(name, str) and name.split(":", 1)[-1] == action:
-            merged.update(_as_dict(resp_dict.get("response")))
+            response = _unwrap_result(resp_dict.get("response"))
+            merged.update(response)
+            # A tool may also nest its card/site data under response["payload"].
+            resp_payload = _as_dict(response.get("payload"))
+            merged.update(_as_dict(resp_payload.get("data")))
 
     merged.update(_as_dict(payload.get("data")))
     return merged
@@ -404,6 +437,13 @@ def map_structured_response(structured: dict[str, Any]) -> dict[str, Any]:
     structured = _as_dict(structured)
     agent_response: str = str(_first_present(structured.get("agent_text"), default=""))
     payload = _as_dict(structured.get("payload"))
+
+    # When no top-level custom payload is present (the common case for our tools,
+    # which return their payload as part of the tool result), recover it from the
+    # latest tool response's ``result.payload``. This carries the rich card the
+    # tool built, so cards are full rather than synthesised from sparse fields.
+    if not payload:
+        payload = _payload_from_tool_responses(structured)
 
     # An explicit payload may carry a hand-built site_action; honour it later
     # only if we don't derive a more specific one.

@@ -268,6 +268,100 @@ def test_availability_maps_to_navigate_property_with_select_room() -> None:
     assert site["selectRoom"] == "canyon-view-suite"
 
 
+def test_availability_unwraps_ces_result_envelope() -> None:
+    """Real CES wraps the tool return under response['result'] (+ nested payload).
+
+    This mirrors a live get_structured_response for a check_availability turn:
+    the canonical (hyphenated) property_id lives inside result, while the agent's
+    raw args may use a different form — the mapping must use the result's ids.
+    """
+    structured: dict[str, Any] = {
+        "agent_text": "Canyon Suite (All-Inclusive) is available — $975 for 3 nights.",
+        "tool_calls": [{"action": "check_availability", "args": {"property_id": "mii_amo"}}],
+        "tool_responses": [
+            {
+                "action": "_response:check_availability",
+                "args": {},
+                "response": {
+                    "result": {
+                        "property_id": "mii-amo",
+                        "room_id": "canyon-suite-ai",
+                        "room": "Canyon Suite, All-Inclusive",
+                        "nightly_rate": 325,
+                        "nights": 3,
+                        "total": 975,
+                        "success": True,
+                        "payload": {
+                            "action": "check_availability",
+                            "data": {"property_id": "mii-amo", "room_id": "canyon-suite-ai"},
+                        },
+                    }
+                },
+            }
+        ],
+        "payload": None,
+    }
+
+    result = map_structured_response(structured)
+    site = result["site_action"]
+    assert site is not None
+    assert site["type"] == "navigate"
+    assert site["to"] == "property"
+    # Must use the canonical hyphenated ids from result, not the raw "mii_amo" arg.
+    assert site["selectRoom"] == "canyon-suite-ai"
+    assert site["highlight"] == "mii-amo"
+
+
+def test_search_unwraps_ces_result_envelope_to_property_card() -> None:
+    """A search_properties turn with the real CES result envelope → property card."""
+    structured: dict[str, Any] = {
+        "agent_text": "I'd recommend Mii amo.",
+        "tool_responses": [
+            {
+                "action": "_response:search_properties",
+                "args": {},
+                "response": {
+                    "result": {
+                        "id": "mii-amo",
+                        "name": "Mii amo",
+                        "nightly_rate": 325,
+                        "success": True,
+                        "payload": {
+                            "action": "search_properties",
+                            "card": {
+                                "type": "property",
+                                "id": "mii-amo",
+                                "name": "Mii amo",
+                                "location": "Boynton Canyon, Sedona, AZ",
+                                "rating": 9.6,
+                                "ratingLabel": "Exceptional",
+                                "reviews": 389,
+                                "price": "$325",
+                                "priceUnit": "/night",
+                                "tags": ["All-Inclusive", "Destination Spa"],
+                                "cta": "Check Availability",
+                            },
+                        },
+                    }
+                },
+            }
+        ],
+        "payload": None,
+    }
+
+    result = map_structured_response(structured)
+    assert len(result["cards"]) == 1
+    card = result["cards"][0]
+    assert card["type"] == "property"
+    assert card["id"] == "mii-amo"
+    assert card["price"] == "$325"
+    # Rich fields from the tool's payload.card flow through (not just sparse ones).
+    assert card["location"] == "Boynton Canyon, Sedona, AZ"
+    assert card["ratingLabel"] == "Exceptional"
+    assert card["tags"] == ["All-Inclusive", "Destination Spa"]
+    assert result["site_action"]["highlight"] == "mii-amo"
+
+
 # --------------------------------------------------------------------------- #
 # Empty / missing payload → just agent_response
 # --------------------------------------------------------------------------- #
