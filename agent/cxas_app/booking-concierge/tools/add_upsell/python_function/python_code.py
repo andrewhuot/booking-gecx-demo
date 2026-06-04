@@ -4,12 +4,9 @@ Self-contained: CES executes each tool in isolation and `cxas push` does not
 bundle shared sibling modules under tools/, so the add-on data and helper are
 embedded here. Add-ons mirror the per-property add-ons used across the demo.
 """
-from __future__ import annotations
-
-from typing import Any
 
 # property id -> its one contextual add-on.
-_ADDONS: dict[str, dict[str, Any]] = {
+_ADDONS = {
     "enchantment-resort": {"id": "spa-package", "name": "Mii amo Spa Package",
                            "description": "Two 80-minute treatments plus daily guided meditation.",
                            "price": 475, "price_context": "for your stay"},
@@ -30,8 +27,16 @@ _ADDONS: dict[str, dict[str, Any]] = {
                      "price": 160, "price_context": "for two"},
 }
 
-_DEFAULT_ADDON: dict[str, Any] = {
+_DEFAULT_ADDON = {
     "name": "Add-on", "description": "", "price": 0, "price_context": ""}
+
+
+def _canonical_id(property_id: str) -> str:
+    """Normalize an LLM-supplied property id (e.g. 'mii_amo' -> 'mii-amo')."""
+    norm = (property_id or "").strip().lower().replace("_", "-").replace(" ", "-")
+    while "--" in norm:
+        norm = norm.replace("--", "-")
+    return norm
 
 
 def _fmt_price(value: float) -> str:
@@ -45,7 +50,7 @@ def add_upsell(
     property_id: str = "",
     addon_id: str = "",
     current_total: float = 0,
-) -> dict[str, Any]:
+) -> dict:
     """Add the property's relevant add-on and return the updated total.
 
     Args:
@@ -64,7 +69,7 @@ def add_upsell(
             "error": "missing_confirmation_number",
             "agent_action": "Let the guest know the add-on can only be applied to a confirmed booking, then confirm the booking first.",
         }
-    addon = _ADDONS.get(property_id, _DEFAULT_ADDON)
+    addon = _ADDONS.get(_canonical_id(property_id), _DEFAULT_ADDON)
     try:
         base = float(current_total or 0)
     except (TypeError, ValueError):

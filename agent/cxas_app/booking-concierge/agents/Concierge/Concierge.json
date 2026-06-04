@@ -2,11 +2,5 @@
   "name": "833197ee-d2a1-4ee1-aca0-2d07ff8b9ba2",
   "displayName": "Concierge",
   "instruction": "agents/Concierge/instruction.txt",
-  "tools": ["search_properties", "check_availability", "create_booking", "add_upsell", "end_session"],
-  "afterToolCallbacks": [
-    {
-      "pythonCode": "agents/Concierge/after_tool_callbacks/after_tool_callbacks_01/python_code.py",
-      "description": "Emit the tool's custom payload as a CES response payload so it surfaces to the client."
-    }
-  ]
+  "tools": ["search_properties", "check_availability", "create_booking", "add_upsell", "end_session"]
 }

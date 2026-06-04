@@ -3,13 +3,15 @@
 Self-contained: CES executes each tool's code in isolation and `cxas push` does
 not bundle shared sibling modules under tools/, so the property data and helpers
 this tool needs are embedded here. The data mirrors frontend/src/data/properties.ts.
-"""
-from __future__ import annotations
 
-from typing import Any
+NOTE: no ``from __future__ import annotations`` and no ``typing`` imports — CES
+builds a pydantic schema from the tool function's signature at runtime, and
+unresolved annotation names (e.g. ``Any``) raise ``NameError`` there. Use only
+builtin types in signatures.
+"""
 
 # vibe -> ordered list of property ids best matching that vibe.
-_VIBE_RANK: dict[str, list[str]] = {
+_VIBE_RANK = {
     "spa_wellness": ["enchantment-resort", "mii-amo", "amara-resort"],
     "romance_couples": ["lauberge-sedona", "enchantment-resort", "ambiente-hotel"],
     "solo_reset": ["mii-amo", "enchantment-resort", "sedona-rouge"],
@@ -19,7 +21,7 @@ _VIBE_RANK: dict[str, list[str]] = {
 }
 
 # Minimal per-property fields this tool needs to build a property card.
-_PROPERTIES: list[dict[str, Any]] = [
+_PROPERTIES = [
     {"id": "enchantment-resort", "name": "Enchantment Resort",
      "location": "Boynton Canyon, Sedona, AZ", "rating": 9.2,
      "rating_label": "Wonderful", "reviews": 847, "nightly_rate": 339,
@@ -52,16 +54,16 @@ _PROPERTIES: list[dict[str, Any]] = [
      "why": "Boutique Mediterranean-inspired value pick with a rooftop pool."},
 ]
 
-_BY_ID: dict[str, dict[str, Any]] = {p["id"]: p for p in _PROPERTIES}
+_BY_ID = {p["id"]: p for p in _PROPERTIES}
 
 
-def _fmt_price(value: float) -> str:
+def _fmt_price(value):
     """Format a number as a display price string, e.g. 1017 -> '$1,017'."""
     n = float(value)
     return f"${int(n):,}" if n.is_integer() else f"${n:,.2f}"
 
 
-def _pick_property(vibe: str, budget_per_night: float) -> dict[str, Any]:
+def _pick_property(vibe, budget_per_night):
     """Return the best-fit property for a vibe within an optional budget."""
     ranked_ids = _VIBE_RANK.get(vibe or "", [p["id"] for p in _PROPERTIES])
     ranked = [_BY_ID[i] for i in ranked_ids if i in _BY_ID]
@@ -79,7 +81,7 @@ def search_properties(
     check_in: str = "",
     check_out: str = "",
     location: str = "Sedona, AZ",
-) -> dict[str, Any]:
+) -> dict:
     """Return the single best-fit property plus a card payload.
 
     Args:

@@ -4,12 +4,9 @@ Self-contained: CES executes each tool in isolation and `cxas push` does not
 bundle shared sibling modules under tools/, so the room data and helpers are
 embedded here. Room data mirrors frontend/src/data/properties.ts.
 """
-from __future__ import annotations
-
-from typing import Any
 
 # property id -> ordered rooms (lead room first). Mirrors the frontend.
-_ROOMS: dict[str, list[dict[str, Any]]] = {
+_ROOMS = {
     "enchantment-resort": [
         {"id": "canyon-view-suite", "name": "Canyon View Suite", "price": 339},
         {"id": "casita-king", "name": "Casita King", "price": 299},
@@ -36,6 +33,18 @@ _ROOMS: dict[str, list[dict[str, Any]]] = {
 }
 
 
+def _canonical_id(property_id: str) -> str:
+    """Normalize an LLM-supplied property id to the canonical hyphenated form.
+
+    The model often passes 'mii_amo', 'Mii amo', or 'MII-AMO'; map all of these
+    to 'mii-amo' so lookups don't spuriously fail.
+    """
+    norm = (property_id or "").strip().lower().replace("_", "-").replace(" ", "-")
+    while "--" in norm:
+        norm = norm.replace("--", "-")
+    return norm
+
+
 def _nights_between(check_in: str, check_out: str) -> int:
     """Whole nights between two YYYY-MM-DD dates; defaults to 3 if unparseable."""
     from datetime import date
@@ -53,7 +62,7 @@ def check_availability(
     check_in: str = "",
     check_out: str = "",
     room_id: str = "",
-) -> dict[str, Any]:
+) -> dict:
     """Return the recommended room, nights, and total for the stay.
 
     Args:
@@ -66,6 +75,7 @@ def check_availability(
       Dict with room, nightly_rate, nights, total, success, and a payload that
       navigates to the property page and pre-selects the room.
     """
+    property_id = _canonical_id(property_id)
     rooms = _ROOMS.get(property_id)
     if not rooms:
         return {

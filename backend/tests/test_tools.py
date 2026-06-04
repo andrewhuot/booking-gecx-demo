@@ -98,6 +98,15 @@ def test_check_availability_unknown_property_fails_gracefully():
     assert "payload" not in out  # no card/nav on failure
 
 
+def test_check_availability_tolerates_id_variants():
+    """The LLM often passes 'mii_amo' / 'Mii amo' — tools must normalize these."""
+    t = _tool("check_availability")
+    for variant in ("mii_amo", "Mii amo", "MII-AMO", " mii-amo "):
+        out = t.check_availability(property_id=variant, check_in="2025-10-16", check_out="2025-10-19")
+        assert out["success"] is True, f"variant {variant!r} should resolve"
+        assert out["payload"]["data"]["property_id"] == "mii-amo"
+
+
 # --------------------------------------------------------------------------- #
 # create_booking
 # --------------------------------------------------------------------------- #
@@ -126,6 +135,15 @@ def test_create_booking_returns_confirmation_card_payload():
     assert out["payload"]["action"] == "create_booking"
 
 
+def test_create_booking_tolerates_id_variants():
+    t = _tool("create_booking")
+    out = t.create_booking(
+        property_id="mii_amo", check_in="2025-10-16", check_out="2025-10-19",
+        guest_name="Rachel Nguyen")
+    assert out["success"] is True
+    assert out["payload"]["card"]["property"] == "Mii amo"
+
+
 # --------------------------------------------------------------------------- #
 # add_upsell
 # --------------------------------------------------------------------------- #
@@ -150,3 +168,10 @@ def test_add_upsell_unknown_property_uses_zero_addon():
     out = t.add_upsell(confirmation_number="BK-9", property_id="nope", current_total=500)
     assert out["success"] is True  # never blocks; falls back to a $0 add-on
     assert out["payload"]["card"]["updatedTotal"] == "$500"
+
+
+def test_add_upsell_tolerates_id_variants():
+    t = _tool("add_upsell")
+    out = t.add_upsell(confirmation_number="BK-1", property_id="mii_amo", current_total=975)
+    assert out["payload"]["card"]["addOn"] == "Intention-Setting Session"
+    assert out["payload"]["card"]["updatedTotal"] == "$1,155"

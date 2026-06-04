@@ -4,13 +4,11 @@ Self-contained: CES executes each tool in isolation and `cxas push` does not
 bundle shared sibling modules under tools/, so the room data and helpers are
 embedded here. Room data mirrors frontend/src/data/properties.ts.
 """
-from __future__ import annotations
 
 import hashlib
-from typing import Any
 
 # property id -> (display name, ordered rooms). Mirrors the frontend.
-_PROPERTY_NAMES: dict[str, str] = {
+_PROPERTY_NAMES = {
     "enchantment-resort": "Enchantment Resort",
     "lauberge-sedona": "L'Auberge de Sedona",
     "mii-amo": "Mii amo",
@@ -19,7 +17,7 @@ _PROPERTY_NAMES: dict[str, str] = {
     "sedona-rouge": "Sedona Rouge Hotel & Spa",
 }
 
-_ROOMS: dict[str, list[dict[str, Any]]] = {
+_ROOMS = {
     "enchantment-resort": [
         {"id": "canyon-view-suite", "name": "Canyon View Suite", "price": 339},
         {"id": "casita-king", "name": "Casita King", "price": 299},
@@ -47,6 +45,14 @@ _ROOMS: dict[str, list[dict[str, Any]]] = {
 
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def _canonical_id(property_id: str) -> str:
+    """Normalize an LLM-supplied property id (e.g. 'mii_amo' -> 'mii-amo')."""
+    norm = (property_id or "").strip().lower().replace("_", "-").replace(" ", "-")
+    while "--" in norm:
+        norm = norm.replace("--", "-")
+    return norm
 
 
 def _fmt_price(value: float) -> str:
@@ -91,7 +97,7 @@ def create_booking(
     check_out: str = "",
     guest_name: str = "",
     payment_method: str = "card on file",
-) -> dict[str, Any]:
+) -> dict:
     """Book the stay and return a confirmation card payload.
 
     Args:
@@ -106,6 +112,7 @@ def create_booking(
       Dict with confirmation_number, success, and a payload that renders a
       confirmation card and navigates to the confirmation page.
     """
+    property_id = _canonical_id(property_id)
     rooms = _ROOMS.get(property_id)
     if not rooms:
         return {
