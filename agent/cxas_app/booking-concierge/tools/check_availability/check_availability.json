@@ -1,0 +1,9 @@
+{
+  "name": "0e4f447d-7ad6-463c-918e-1efd4f75cf02",
+  "displayName": "check_availability",
+  "pythonFunction": {
+    "name": "check_availability",
+    "pythonCode": "tools/check_availability/python_function/python_code.py",
+    "description": "Check availability and pricing for a chosen property and dates before quoting a total (Phase 3). Pass property_id plus check_in and check_out (YYYY-MM-DD). Returns the recommended room, nights, and total, and a payload that opens the property page with the room pre-selected. Use the returned nightly rate, nights, and total verbatim."
+  }
+}

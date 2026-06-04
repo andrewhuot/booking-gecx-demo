@@ -100,3 +100,17 @@ def test_search_properties_returns_property_card_payload():
     assert card["priceUnit"] == "/night"
     assert card["cta"] == "Check Availability"
     assert isinstance(card["tags"], list) and card["tags"]
+
+
+def test_check_availability_returns_room_and_nav_data():
+    t = _tool("check_availability")
+    out = t.check_availability(
+        property_id="enchantment-resort", check_in="2025-10-16", check_out="2025-10-19")
+    assert out["success"] is True
+    assert out["nights"] == 3
+    assert out["room_id"] == "canyon-view-suite"
+    assert out["total"] == 339 * 3
+    payload = out["payload"]
+    assert payload["action"] == "check_availability"
+    assert payload["data"]["property_id"] == "enchantment-resort"
+    assert payload["data"]["room_id"] == "canyon-view-suite"
