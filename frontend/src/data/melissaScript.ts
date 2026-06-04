@@ -1,0 +1,143 @@
+import type { MelissaScript } from '../lib/types';
+
+// Scenario 3 — Melissa (Push Notification → Mobile Chat). Proactive
+// re-engagement; profile-assisted grounding skips disambiguation turns.
+export const MELISSA_SCRIPT: MelissaScript = {
+  notification: {
+    appName: 'Booking.com',
+    title: "Hi Melissa — it's been a while.",
+    body: "When you're ready for your next getaway, we've got some ideas. Tap to explore.",
+    timestamp: 'now',
+  },
+  chat: [
+    {
+      role: 'agent',
+      text: 'Welcome back, Melissa. Are you starting to think about a trip, or just seeing what\'s out there?',
+      delay: 800,
+      capability: 'Proactive Re-engagement',
+    },
+    {
+      role: 'user',
+      text: "I've been meaning to plan something actually. I need a solo reset — work has been nonstop.",
+      delay: 0,
+      capability: 'Profile-Assisted Grounding',
+    },
+    {
+      role: 'agent',
+      text: 'Based on your past trips, you tend toward boutique spots in nature — somewhere to unplug. Still the vibe, or something different this time?',
+      delay: 1300,
+      capability: 'Profile-Assisted Grounding',
+    },
+    {
+      role: 'user',
+      text: "Exactly that. Maybe with a wellness angle — I've been wanting to try an immersive spa place.",
+      delay: 0,
+      capability: 'Profile-Assisted Grounding',
+    },
+    {
+      role: 'agent',
+      text: 'Dates and budget?',
+      delay: 800,
+      capability: 'Profile-Assisted Grounding',
+    },
+    {
+      role: 'user',
+      text: 'Two weeks from now, midweek — Wednesday through Friday. Up to $350 a night.',
+      delay: 0,
+      capability: 'Personalized Matching',
+    },
+    {
+      role: 'agent',
+      text: 'Strong match: Mii amo in Sedona. Destination spa inside Boynton Canyon — fully immersive, solo-focused, no big resort energy. All-inclusive at $325/night: room, meals, two spa treatments per day, guided hikes, meditation. Denver to Phoenix is a 2-hour flight. Want me to check Wednesday the 18th through Friday the 20th?',
+      delay: 2000,
+      capability: 'Personalized Matching',
+      card: {
+        type: 'property',
+        id: 'mii-amo',
+        name: 'Mii amo',
+        location: 'Boynton Canyon, Sedona, AZ',
+        rating: 9.6,
+        ratingLabel: 'Exceptional',
+        reviews: 389,
+        price: '$325',
+        priceUnit: '/night, all-inclusive',
+        tags: ['Destination Spa', 'Solo-Friendly', 'All-Inclusive'],
+        cta: 'Check Availability',
+      },
+    },
+    {
+      role: 'user',
+      text: "That's exactly what I've been picturing. Yes.",
+      delay: 0,
+      capability: 'Funnel Compression',
+    },
+    {
+      role: 'agent',
+      text: 'Available. 2 nights, all-inclusive, $650 before taxes. Book to your Mastercard ending in 6190?',
+      delay: 1200,
+      capability: 'Funnel Compression',
+    },
+    {
+      role: 'user',
+      text: 'Book it.',
+      delay: 0,
+      capability: 'Funnel Compression',
+    },
+    {
+      role: 'agent',
+      text: 'Done. Confirmation #BK-5518230 — details in your app and email.',
+      delay: 1000,
+      capability: 'Funnel Compression',
+      card: {
+        type: 'confirmation',
+        confirmationNumber: 'BK-5518230',
+        property: 'Mii amo',
+        dates: 'Jun 18 – Jun 20, 2026',
+        room: 'Canyon Suite, All-Inclusive',
+        nights: 2,
+        total: '$650',
+        status: 'Confirmed',
+      },
+    },
+    {
+      role: 'system',
+      text: 'PRIMARY BOOKING COMPLETE — UPSELL PHASE',
+      delay: 2000,
+      capability: 'LTV-Optimized Upsell',
+    },
+    {
+      role: 'agent',
+      text: 'One thing — Mii amo offers a pre-arrival Intention Setting session: a 30-minute video call with a wellness counselor who customizes your entire on-site treatment plan before you land. It\'s $75. Want me to add it?',
+      delay: 1500,
+      capability: 'LTV-Optimized Upsell',
+      card: {
+        type: 'upsell',
+        name: 'Intention Setting Session',
+        description: '30-min video call — personalized treatment plan',
+        price: '$75',
+        priceContext: 'one-time',
+        cta: 'Add to Booking',
+      },
+    },
+    {
+      role: 'user',
+      text: "That's really thoughtful. Yes.",
+      delay: 0,
+      capability: 'LTV-Optimized Upsell',
+    },
+    {
+      role: 'agent',
+      text: 'Added. Updated total: $725 before taxes. Enjoy the reset, Melissa.',
+      delay: 1000,
+      capability: 'LTV-Optimized Upsell',
+      card: {
+        type: 'confirmation_update',
+        confirmationNumber: 'BK-5518230',
+        addOn: 'Intention Setting Session',
+        addOnPrice: '$75',
+        updatedTotal: '$725',
+        status: 'Updated',
+      },
+    },
+  ],
+};

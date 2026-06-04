@@ -1,0 +1,25 @@
+# Node
+node_modules/
+dist/
+*.local
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Env / secrets
+.env
+service-account.json
+*.key.json
+
+# Editor
+.vscode/
+.idea/
+
+# Build artifacts
+frontend/dist/
+agent/.exported/
