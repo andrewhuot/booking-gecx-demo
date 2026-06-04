@@ -1,23 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { ChatWindow } from './ChatWindow';
 
-// Floating bottom-right chat entry point. Collapsed: a navy bubble button with
-// an attention pulse + a brief "AI Assistant" tooltip. Expanded: the ChatWindow.
+// Floating bottom-right chat entry point. Opens expanded by default so the
+// assistant is front-and-center for the demo. Collapsed (after minimizing):
+// a navy bubble button with an attention pulse + a brief "AI Assistant" tooltip.
 export function ChatWidget() {
-  const [open, setOpen] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(true);
-  const [pulse, setPulse] = useState(true);
+  // Open by default — the chat is the star of this demo, so it greets the
+  // visitor immediately rather than hiding behind a launcher bubble.
+  const [open, setOpen] = useState(true);
+  // The launcher tooltip/pulse only matter once the user has minimized, so
+  // they start off and re-arm in handleClose.
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [pulse, setPulse] = useState(false);
 
-  // Tooltip fades after 3s; the attention pulse stops shortly after.
-  useEffect(() => {
-    const tooltipTimer = window.setTimeout(() => setShowTooltip(false), 3000);
-    const pulseTimer = window.setTimeout(() => setPulse(false), 6000);
-    return () => {
-      window.clearTimeout(tooltipTimer);
-      window.clearTimeout(pulseTimer);
-    };
-  }, []);
+  // Clear any pending pulse/tooltip timers on unmount.
+  const timersRef = useRef<number[]>([]);
+  useEffect(() => () => timersRef.current.forEach(window.clearTimeout), []);
 
   const handleOpen = () => {
     setOpen(true);
@@ -25,10 +24,21 @@ export function ChatWidget() {
     setPulse(false);
   };
 
+  // On minimize, briefly draw the eye back to the launcher bubble.
+  const handleClose = () => {
+    setOpen(false);
+    setShowTooltip(true);
+    setPulse(true);
+    timersRef.current.push(
+      window.setTimeout(() => setShowTooltip(false), 3000),
+      window.setTimeout(() => setPulse(false), 6000),
+    );
+  };
+
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end">
       {open ? (
-        <ChatWindow onClose={() => setOpen(false)} />
+        <ChatWindow onClose={handleClose} />
       ) : (
         <div className="flex items-center gap-2.5">
           {/* Auto-fading tooltip to the left of the button */}

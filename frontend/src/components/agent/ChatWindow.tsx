@@ -73,19 +73,22 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
   };
 
   return (
-    <div className="flex h-[560px] max-h-[80vh] w-[400px] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-card bg-white shadow-widget animate-widget-open">
+    <div className="flex h-[600px] max-h-[calc(100vh-22rem)] min-h-[420px] w-[420px] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-card bg-white shadow-widget animate-widget-open">
       {/* Header */}
-      <header className="flex shrink-0 items-center justify-between bg-bc-navy px-4 py-3 text-white">
-        <div className="flex items-center gap-2.5">
+      <header className="flex shrink-0 items-center justify-between bg-bc-navy px-4 py-3.5 text-white">
+        <div className="flex items-center gap-3">
           <span
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-lg"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl"
             aria-hidden
           >
             ✦
           </span>
           <div className="leading-tight">
-            <div className="text-sm font-bold">Booking.com Assistant</div>
-            <div className="text-[11px] text-white/70">✦ Powered by Gemini</div>
+            <div className="text-base font-bold">Booking.com Assistant</div>
+            <div className="flex items-center gap-1 text-[11px] text-white/75">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
+              ✦ Powered by Gemini
+            </div>
           </div>
         </div>
         <button
