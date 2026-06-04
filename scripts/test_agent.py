@@ -37,21 +37,28 @@ if str(REPO_ROOT) not in sys.path:
 from backend.cxas_client import CXASClient, CXASUnavailable  # noqa: E402
 from backend.mapping import map_structured_response  # noqa: E402
 
+# Short slug -> human label, so `--scenario rachel` works on the CLI.
+SCENARIO_LABELS: dict[str, str] = {
+    "rachel": "Rachel (web chat)",
+    "david": "David (voice call)",
+    "melissa": "Melissa (mobile chat)",
+}
+
 # Each scenario is a list of (channel, user_message) turns that walk the funnel.
 GOLDEN_SCENARIOS: dict[str, list[tuple[str, str]]] = {
-    "Rachel (web chat)": [
+    "rachel": [
         ("chat", "I need a vacation. Something relaxing, not a big city. Maybe a few days?"),
         ("chat", "US. Spa and wellness, 100%. Budget around $250-400 a night."),
         ("chat", "Yes - Thursday to Sunday next week. Rachel Nguyen, Visa on file."),
         ("chat", "Add the spa package."),
     ],
-    "David (voice call)": [
+    "david": [
         ("voice", "My anniversary is coming up and I want to plan something special, nothing too far from Austin."),
         ("voice", "Pampered - my wife wants a real spa trip. Under five hundred a night."),
         ("voice", "Our anniversary is November 8th, Friday through Sunday. Book it to my Genius Visa."),
         ("voice", "Add the couples package."),
     ],
-    "Melissa (mobile chat)": [
+    "melissa": [
         ("mobile", "I need a solo reset - work has been nonstop. Something immersive and wellness-focused."),
         ("mobile", "Two weeks from now, Wednesday through Friday. Up to $350 a night."),
         ("mobile", "Book it to my Mastercard on file."),
@@ -88,7 +95,7 @@ def run(scenarios: dict[str, list[tuple[str, str]]], pace_seconds: float) -> int
     overall_ok = True
     for name, turns in scenarios.items():
         print("=" * 78)
-        print(f"  SCENARIO: {name}")
+        print(f"  SCENARIO: {SCENARIO_LABELS.get(name, name)}")
         print("=" * 78)
         try:
             session_id = client.start_session()

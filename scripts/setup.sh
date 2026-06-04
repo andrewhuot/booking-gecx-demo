@@ -67,9 +67,9 @@ cat <<'EOF'
 
 ==> Setup complete. Next steps:
 
-  1. (Optional) Provision the live CXAS agent — requires billing on the GCP
-     project. Safe to run now; it preserves config and prints instructions if
-     billing is disabled:
+  1. (Optional) Provision the live CXAS agent — needs ADC credentials
+     (gcloud auth application-default login) and the CES API enabled. It lints
+     the app tree and pushes it, writing CXAS_APP_NAME into .env:
        backend/.venv/bin/python scripts/create_agent.py
 
   2. Start the backend API:
@@ -78,8 +78,8 @@ cat <<'EOF'
   3. Start the frontend (separate terminal):
        cd frontend && npm install && npm run dev
 
-  4. Run the backend unit tests (no network / billing needed):
-       backend/.venv/bin/python -m pytest backend/tests/test_mapping.py -q
+  4. Run the backend unit tests (no network / credentials needed):
+       backend/.venv/bin/python -m pytest backend/tests -q
 
-Scripted mode is the default demo path and works without billing.
+Scripted mode is the default demo path and needs no GCP access at all.
 EOF

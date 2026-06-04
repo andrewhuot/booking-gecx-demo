@@ -10,9 +10,10 @@ Endpoints:
   * ``GET  /api/health``   → ``{cxas_reachable, reason, mode}``
 
 Resilience guarantee: the API **never returns 500 on a CXAS outage**. When the
-live agent is unavailable (e.g. billing disabled → 403), ``/api/chat`` returns
-HTTP 200 with a friendly ``agent_response`` and empty cards, so the frontend can
-fall back to scripted mode without error handling on the wire.
+live agent is unavailable (e.g. a rate-limit/quota 429, or the agent isn't
+provisioned), ``/api/chat`` returns HTTP 200 with a friendly ``agent_response``
+and empty cards, so the frontend can fall back to scripted mode without error
+handling on the wire.
 """
 
 from __future__ import annotations
@@ -98,8 +99,8 @@ def create_session() -> SessionResponse:
 def chat(request: ChatRequest) -> ChatResponse:
     """Run one conversational turn and map the reply to the frontend shape.
 
-    On :class:`CXASUnavailable` (billing/connection/import), returns HTTP 200
-    with a friendly explanation and empty cards — never a 500.
+    On :class:`CXASUnavailable` (rate-limit/permission/connection/import),
+    returns HTTP 200 with a friendly explanation and empty cards — never a 500.
     """
     try:
         structured = _client.run_turn(
@@ -115,7 +116,7 @@ def chat(request: ChatRequest) -> ChatResponse:
             session_id=request.session_id,
         )
     except CXASUnavailable as exc:
-        # Graceful degradation: tell the user live mode needs the backend/billing.
+        # Graceful degradation: surface the reason (rate-limit, not provisioned, etc.).
         return ChatResponse(
             agent_response=(
                 "Live mode isn't available right now. " + exc.reason + " "

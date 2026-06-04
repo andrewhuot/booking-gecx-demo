@@ -22,10 +22,10 @@ Expected CXAS structured-response contract (input)
     }
 
 The agent drives the UI through the **custom payload** (the documented channel
-for structured card data) and/or its **tool calls/responses**. Because the live
-agent cannot be exercised (the GCP project has billing disabled), we define the
-contract the agent is expected to emit and map it defensively — tolerating
-missing keys, partial data, and either a payload-first or tool-first style.
+for structured card data) and/or its **tool calls/responses**. We map both
+defensively — tolerating missing keys, partial data, and either a payload-first
+or tool-first style — so the contract holds regardless of which channel the live
+agent uses on a given turn.
 
 The agent SHOULD return a custom ``payload`` shaped like one of::
 
