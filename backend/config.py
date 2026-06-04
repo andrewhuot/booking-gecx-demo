@@ -2,8 +2,8 @@
 
 All settings have sensible defaults baked in for the demo project so the API
 and scripts run even when ``.env`` is absent. Live-mode wiring reads
-``CXAS_APP_NAME`` / ``CXAS_AGENT_ID`` once ``scripts/create_agent.py`` has
-provisioned the agent (and billing is enabled).
+``CXAS_APP_NAME`` once ``scripts/create_agent.py`` has provisioned the agent
+(the CES API is enabled and ADC credentials are required).
 """
 
 from __future__ import annotations
@@ -27,6 +27,17 @@ def _env(key: str, default: str) -> str:
     return value if value else default
 
 
+def _env_float(key: str, default: float) -> float:
+    """Return an env var parsed as float, falling back on unset/empty/invalid."""
+    raw = _env(key, "")
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
 @dataclass(frozen=True)
 class Settings:
     """Immutable, fully-typed view of the backend configuration."""
@@ -37,6 +48,8 @@ class Settings:
     cxas_app_name: str
     cxas_agent_id: str
     demo_mode: str
+    # Client-side pacing for the CES per-minute "RunSession LLM tokens" quota.
+    cxas_requests_per_minute: float
 
     @property
     def app_parent(self) -> str:
@@ -59,6 +72,7 @@ def load_settings() -> Settings:
         cxas_app_name=_env("CXAS_APP_NAME", ""),
         cxas_agent_id=_env("CXAS_AGENT_ID", ""),
         demo_mode=_env("DEMO_MODE", "scripted"),
+        cxas_requests_per_minute=_env_float("CXAS_REQUESTS_PER_MINUTE", 6.0),
     )
 
 
