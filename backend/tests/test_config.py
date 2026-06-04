@@ -74,7 +74,6 @@ def test_env_overrides_everything(monkeypatch):
     assert s.cxas_app_display_name == "My Concierge"
     assert s.cxas_app_id == "my-concierge"
     assert s.cxas_model == "gemini-2.5-pro"
-    assert s.app_parent == "projects/my-proj/locations/us"
 
 
 def test_invalid_requests_per_minute_falls_back(monkeypatch):

@@ -217,6 +217,9 @@ class CXASClient:
         except TypeError:
             # Older SDKs without a rate_limiter kwarg: construct without it.
             sessions = Sessions(app_name=self.app_name)
+        except CXASUnavailable:
+            # e.g. CXAS_APP_NAME unset — surface its clear message verbatim.
+            raise
         except Exception as exc:  # noqa: BLE001
             raise CXASUnavailable(_humanize_error(exc)) from exc
 

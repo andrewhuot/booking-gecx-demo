@@ -63,11 +63,6 @@ class Settings:
     cxas_model: str
 
     @property
-    def app_parent(self) -> str:
-        """The CXAS parent resource path for the configured project/location."""
-        return f"projects/{self.gcp_project_id}/locations/{self.gcp_location}"
-
-    @property
     def is_live(self) -> bool:
         """True when the demo is configured to attempt real CXAS calls."""
         return self.demo_mode.lower() == "live"
