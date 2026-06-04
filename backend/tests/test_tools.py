@@ -136,3 +136,19 @@ def test_create_booking_returns_confirmation_card_payload():
     assert card["total"] == "$1,017"
     assert card["status"] == "Confirmed"
     assert out["payload"]["action"] == "create_booking"
+
+
+def test_add_upsell_returns_confirmation_update_payload():
+    t = _tool("add_upsell")
+    out = t.add_upsell(
+        confirmation_number="BK-1234567", property_id="mii-amo",
+        addon_id="intention-session", current_total=975)
+    assert out["success"] is True
+    card = out["payload"]["card"]
+    assert card["type"] == "confirmation_update"
+    assert card["confirmationNumber"] == "BK-1234567"
+    assert card["addOn"] == "Intention-Setting Session"
+    assert card["addOnPrice"] == "$180"
+    assert card["updatedTotal"] == "$1,155"
+    assert card["status"] == "Updated"
+    assert out["payload"]["action"] == "add_upsell"

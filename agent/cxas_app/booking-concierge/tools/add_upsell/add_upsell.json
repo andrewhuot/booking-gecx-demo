@@ -1,0 +1,9 @@
+{
+  "name": "cdf864f9-73cc-45ad-8127-4b99b50439f6",
+  "displayName": "add_upsell",
+  "pythonFunction": {
+    "name": "add_upsell",
+    "pythonCode": "tools/add_upsell/python_function/python_code.py",
+    "description": "Apply one relevant add-on AFTER a booking is confirmed and only if the guest accepts (Phase 4). Pass confirmation_number, property_id, and current_total. Returns the updated_total and a payload that renders a confirmation-update card and updates the confirmation on the site. Read back the updated total exactly. Never call before booking; never offer twice."
+  }
+}
