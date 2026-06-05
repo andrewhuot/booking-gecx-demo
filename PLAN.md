@@ -134,6 +134,37 @@ inspiration cards.
 - [x] Validation complete.
 - [x] Changes committed and pushed.
 
+## Current Update — Chat Card Media And Markdown
+
+### Goal
+Make the assistant chat feel production-ready in live mode by showing real
+photography in destination, hotel, flight, and experience cards, and by rendering
+basic markdown formatting in live agent text.
+
+### Relevant Files
+- `frontend/src/components/agent/DemoFlowCards.tsx` - chat choice-card media.
+- `frontend/src/components/agent/ChatBubble.tsx` - agent message body rendering.
+- `frontend/src/components/agent/*.test.tsx` - regression coverage for images
+  and markdown formatting.
+- `frontend/src/assets/chat/` - bundled chat-card image assets.
+
+### Acceptance Criteria
+- Choice-group cards render actual `img` elements for July 4 destination,
+  hotel, flight, and experience options.
+- Image alt text remains descriptive and tied to each card.
+- Agent markdown supports bold emphasis and bullet-style recommendation text
+  without exposing literal `**` formatting.
+- Frontend tests, lint, build, and browser verification pass.
+
+### Progress
+- [x] Root cause traced to gradient placeholders and raw text rendering.
+- [x] Failing chat card image test written.
+- [x] Failing markdown rendering test written.
+- [x] Chat image assets and renderer implemented.
+- [x] Markdown renderer implemented.
+- [x] Validation complete.
+- [x] Changes committed and pushed.
+
 ## Decision Log
 - 2026-06-04 00:00 — Use path-based mode selection because the request asked for a subtle toggle and the existing UI already has presenter controls for visible mode switching.
 - 2026-06-04 00:00 — Keep Part 1 on the desktop chat channel and leave the existing voice channel untouched because the script explicitly says Part 2 will be handled separately.

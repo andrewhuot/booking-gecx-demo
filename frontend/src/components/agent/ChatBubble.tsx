@@ -8,6 +8,7 @@ import {
   LocationPermissionCard,
   PaymentPanelCard,
 } from './DemoFlowCards';
+import { MarkdownText } from './MarkdownText';
 
 interface ChatBubbleProps {
   message: RenderedMessage;
@@ -63,8 +64,8 @@ export function ChatBubble({ message }: ChatBubbleProps) {
       </div>
       <div className="max-w-[85%]">
         {message.text && (
-          <div className="whitespace-pre-line rounded-2xl rounded-tl-sm border border-bc-gray-200 bg-white px-3.5 py-2 text-sm leading-snug text-bc-gray-900 shadow-card">
-            {message.text}
+          <div className="rounded-2xl rounded-tl-sm border border-bc-gray-200 bg-white px-3.5 py-2 text-sm leading-snug text-bc-gray-900 shadow-card">
+            <MarkdownText text={message.text} />
           </div>
         )}
         {message.card && <CardRenderer card={message.card} />}

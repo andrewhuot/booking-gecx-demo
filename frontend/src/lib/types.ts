@@ -97,7 +97,9 @@ export interface ChoiceOptionData {
   meta?: string;
   price?: string;
   description?: string;
+  image?: string;
   imageLabel?: string;
+  imagePosition?: string;
   icon?: string;
   replyText: string;
 }
