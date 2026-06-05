@@ -122,12 +122,14 @@ live demo at a fresh GCP project with better quota.
    `GCP_PROJECT_NUMBER`, provisions the CXAS app, writes `CXAS_APP_NAME`, starts
    the backend/frontend, and opens `http://127.0.0.1:3000/google/live`.
 
-4. If the project has increased CES quota, raise the client-side pacing in
-   `.env` before the demo. The default is intentionally conservative:
+4. The default client-side pacing assumes a project with improved CES quota:
 
    ```ini
    CXAS_REQUESTS_PER_MINUTE=12
    ```
+
+   If you see `429` quota responses, lower it to `6` and retry after the quota
+   window clears.
 
 5. Run the full desktop demo from the opened Google page: click the Booking.com
    sponsored result, then use the message script below.
@@ -301,7 +303,7 @@ now talks to *your* agent through the same desktop chat surface.
 | `GCP_LOCATION` | script + backend | CES region. Use `us`. |
 | `CXAS_APP_NAME` | backend | Deployed app resource path. **Written by `create_agent.py`** — leave blank initially. |
 | `CXAS_APP_DISPLAY_NAME` / `CXAS_APP_ID` / `CXAS_MODEL` | script | Name / id / model for the app `create_agent.py` provisions (CLI-overridable). |
-| `CXAS_REQUESTS_PER_MINUTE` | backend | Client-side pacing for the CES token quota (default 6). |
+| `CXAS_REQUESTS_PER_MINUTE` | backend | Client-side pacing for the CES token quota (default 12; lower to 6 if you see 429s). |
 | `DEMO_MODE` | backend | `scripted` (default) or `live`. |
 | `VITE_API_URL` / `VITE_DEMO_MODE` | frontend | Backend URL and the UI's initial mode. |
 
@@ -310,11 +312,13 @@ needs none of the GCP settings.
 
 ## Notes & limits
 
-- **Token quota.** A new project's default CES `RunSession LLM tokens` quota is
-  ~1,000/min; the concierge prompt is large, so rapid back-to-back live turns can
-  hit `429`. The backend paces requests (`CXAS_REQUESTS_PER_MINUTE`) and retries
-  `429`s with backoff. For snappy multi-turn demos, request a quota increase for
-  `ces.googleapis.com` (region `us`) on your project, or shorten
+- **Token quota.** The repo defaults `CXAS_REQUESTS_PER_MINUTE=12`, assuming a
+  project with improved CES quota. A new project's default CES `RunSession LLM
+  tokens` quota is often lower; the concierge prompt is large, so rapid
+  back-to-back live turns can hit `429`. The backend paces requests and retries
+  `429`s with backoff. If you still see rate limits, lower
+  `CXAS_REQUESTS_PER_MINUTE` to `6`, request a quota increase for
+  `ces.googleapis.com` (region `us`), or shorten
   `agent/cxas_app/booking-concierge/agents/Concierge/instruction.txt`.
 - **Voice** in the browser uses Web Speech; the HTTP bridge itself is text-only
   (audio streaming is out of scope), so the voice scenario runs as text turns.
