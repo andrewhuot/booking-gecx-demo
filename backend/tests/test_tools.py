@@ -33,7 +33,13 @@ def _tool(name: str):
 # Self-containment guard: no tool may import a shared sibling module.
 # --------------------------------------------------------------------------- #
 def test_tools_are_self_contained_no_shared_import():
-    for name in ("search_properties", "check_availability", "create_booking", "add_upsell"):
+    for name in (
+        "search_properties",
+        "check_availability",
+        "prepare_checkout",
+        "create_booking",
+        "add_upsell",
+    ):
         src = (TOOLS / name / "python_function" / "python_code.py").read_text()
         assert "_shared" not in src, f"{name} must not import the removed _shared module"
         assert "import data" not in src, f"{name} must be self-contained (no shared data import)"
@@ -218,6 +224,22 @@ def test_july4_hotel_flight_experience_and_booking_payloads():
     experiences = availability.check_availability(stage="experiences", destination_id="marthas-vineyard")
     assert experiences["payload"]["card"]["variant"] == "experience"
     assert experiences["payload"]["card"]["options"][0]["title"] == "Sunset Sailing Cruise"
+
+    checkout = _tool("prepare_checkout").prepare_checkout(
+        destination_id="marthas-vineyard",
+        hotel_id="summercamp",
+        flight_id="jetblue",
+        experience_id="sunset-sailing",
+        travelers=2,
+        total=1561,
+    )
+    assert checkout["success"] is True
+    assert checkout["payload"]["action"] == "prepare_checkout"
+    card = checkout["payload"]["card"]
+    assert card["type"] == "payment_panel"
+    assert card["title"] == "Complete booking"
+    assert card["options"][0]["title"] == "Visa ending in 4242"
+    assert card["options"][0]["replyText"] == "Use my saved Visa and confirm"
 
     booking = _tool("create_booking").create_booking(
         destination_id="marthas-vineyard",

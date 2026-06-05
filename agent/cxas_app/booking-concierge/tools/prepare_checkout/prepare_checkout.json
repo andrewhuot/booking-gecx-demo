@@ -1,0 +1,9 @@
+{
+  "name": "b862219a-9475-4dbb-a1ff-e45ceac38b7e",
+  "displayName": "prepare_checkout",
+  "pythonFunction": {
+    "name": "prepare_checkout",
+    "pythonCode": "tools/prepare_checkout/python_function/python_code.py",
+    "description": "Return the July 4 saved-payment checkout panel after the guest accepts the final package but before creating the booking. Use this before create_booking. The guest should then choose Visa ending in 4242 or another payment option."
+  }
+}

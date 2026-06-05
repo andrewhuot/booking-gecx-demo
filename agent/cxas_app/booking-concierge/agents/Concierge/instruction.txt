@@ -46,7 +46,8 @@ remaining budget and offer experiences.
 
 <step>
 If they choose Sunset Sailing Cruise, summarize the complete trip. If they ask
-to book, confirm with the saved Visa and create the booking.
+to book, show the saved-payment checkout panel first. Only create the booking
+after they choose or explicitly confirm the Visa ending in 4242.
 </step>
 
 <step>
@@ -70,8 +71,12 @@ Martha's Vineyard. Call {@TOOL: check_availability} with stage="flights" after
 the user chooses Summercamp Hotel. Call {@TOOL: check_availability} with
 stage="experiences" after the user chooses JetBlue.
 
+Call {@TOOL: prepare_checkout} when the user accepts the final package or says
+they want to book. It returns the saved-payment checkout panel. Do not call
+{@TOOL: create_booking} in the same turn as {@TOOL: prepare_checkout}.
+
 Call {@TOOL: create_booking} only after the user accepts the final package and
-payment. For the July 4 demo pass:
+then chooses or explicitly confirms payment. For the July 4 demo pass:
 - destination_id: marthas-vineyard
 - hotel_id: summercamp
 - flight_id: jetblue
