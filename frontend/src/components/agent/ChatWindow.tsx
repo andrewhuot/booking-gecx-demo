@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDemoStore } from '../../store/demoStore';
 import { useCXASAgent } from '../../hooks/useCXASAgent';
+import { withLiveFallbackCard } from '../../lib/liveFallbackCards';
 import { MessageList } from './MessageList';
 import { QuickReplyChips } from './QuickReplyChips';
 import { CHAT_SUBMIT_EVENT, type ChatSubmitEventDetail } from './chatSubmitEvent';
@@ -46,7 +47,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     setTyping(true);
     try {
       const result = await sendMessage(trimmed, 'chat');
-      pushAgentMessage(result);
+      pushAgentMessage(withLiveFallbackCard(result, scenario));
     } catch {
       pushAgentMessage({
         role: 'agent',
@@ -57,7 +58,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     } finally {
       setTyping(false);
     }
-  }, [pushAgentMessage, pushUserMessage, sendMessage, setTyping]);
+  }, [pushAgentMessage, pushUserMessage, scenario, sendMessage, setTyping]);
 
   const submitMessage = useCallback(
     async (text: string) => {
