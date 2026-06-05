@@ -93,21 +93,25 @@ cd frontend && npm run test:run                         # frontend
 
 ## New computer + new GCP project
 
-Use this when you copy the repo to a different machine and want to point the
-live demo at a fresh GCP project with better quota.
+Use this checklist when you move the repo to another machine and want the live
+demo to use a fresh GCP project.
 
-1. Install the prerequisites: Python 3.12, `uv`, Node 18+, npm, and the Google
-   Cloud CLI.
+1. Install the basics:
 
-2. Authenticate once on the new computer:
+   - Python 3.12
+   - [`uv`](https://docs.astral.sh/uv/)
+   - Node 18+ and npm
+   - [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)
+
+2. Sign in to Google Cloud on the new computer:
 
    ```bash
    gcloud auth login
    gcloud auth application-default login
    ```
 
-3. From the repo root, run one command. Replace `YOUR_PROJECT_ID` with the new
-   project id:
+3. Run the live-demo setup from the repo root. Replace `YOUR_PROJECT_ID` with
+   the project you want to use:
 
    ```bash
    ./scripts/run_turnkey_demo.sh \
@@ -117,24 +121,24 @@ live demo at a fresh GCP project with better quota.
      --project-id YOUR_PROJECT_ID
    ```
 
-   The launcher installs local dependencies, creates `.env` if needed, sets the
-   gcloud project and ADC quota project, enables `ces.googleapis.com`, derives
-   `GCP_PROJECT_NUMBER`, provisions the CXAS app, writes `CXAS_APP_NAME`, starts
-   the backend/frontend, and opens `http://127.0.0.1:3000/google/live`.
+   This single command installs dependencies, creates `.env`, points gcloud at
+   your project, enables `ces.googleapis.com`, finds the project number,
+   provisions the CXAS app, starts the backend and frontend, and opens:
+   `http://127.0.0.1:3000/google/live`.
 
-4. The default client-side pacing assumes a project with improved CES quota:
+4. Demo it. On the Google page, click the Booking.com sponsored result, then use
+   the message script below.
 
-   ```ini
-   CXAS_REQUESTS_PER_MINUTE=12
-   ```
+The repo assumes a faster project and defaults to:
 
-   If you see `429` quota responses, lower it to `6` and retry after the quota
-   window clears.
+```ini
+CXAS_REQUESTS_PER_MINUTE=12
+```
 
-5. Run the full desktop demo from the opened Google page: click the Booking.com
-   sponsored result, then use the message script below.
+If you see `429` quota responses, set that value to `6` in `.env`, wait for the
+quota window to clear, and rerun the launcher.
 
-To prepare the machine and provision the agent without starting servers:
+To prepare the computer and provision the agent without starting the demo:
 
 ```bash
 ./scripts/run_turnkey_demo.sh \
@@ -145,9 +149,8 @@ To prepare the machine and provision the agent without starting servers:
   --setup-only
 ```
 
-If your organization requires someone else to enable APIs, run the same command
-without `--prepare-gcp` after they enable `ces.googleapis.com`, or pass
-`--project-number PROJECT_NUMBER` explicitly.
+If your organization requires an admin to enable APIs, ask them to enable
+`ces.googleapis.com`, then rerun the command without `--prepare-gcp`.
 
 ## Desktop demo script
 
