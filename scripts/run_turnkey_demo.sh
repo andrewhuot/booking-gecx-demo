@@ -20,6 +20,7 @@ SKIP_INSTALL=0
 SETUP_ONLY=0
 PROVISION_AGENT=0
 DRY_RUN_PROVISION=0
+PREPARE_GCP=0
 
 PROJECT_ID=""
 PROJECT_NUMBER=""
@@ -43,13 +44,14 @@ Default mock mode:
   Opens http://127.0.0.1:3000/google
 
 Live GECX/CXAS mode:
-  ./scripts/run_turnkey_demo.sh --mode live --provision-agent --project-id YOUR_PROJECT_ID
+  ./scripts/run_turnkey_demo.sh --mode live --prepare-gcp --provision-agent --project-id YOUR_PROJECT_ID
   Opens http://127.0.0.1:3000/google/live
 
 Options:
   --mode mock|live          mock runs offline scripted flow; live uses GECX/CXAS.
   --provision-agent         Before launching live mode, run scripts/create_agent.py.
   --dry-run-provision       Print the CXAS provisioning commands without pushing.
+  --prepare-gcp             Enable CES, set gcloud project/quota project, and derive project number.
   --project-id VALUE        Write GCP_PROJECT_ID to .env and pass it to provisioning.
   --project-number VALUE    Write GCP_PROJECT_NUMBER to .env for your GCP project.
   --location VALUE          Write GCP_LOCATION to .env (default remains us).
@@ -108,6 +110,10 @@ while [[ $# -gt 0 ]]; do
     --dry-run-provision)
       DRY_RUN_PROVISION=1
       PROVISION_AGENT=1
+      shift
+      ;;
+    --prepare-gcp)
+      PREPARE_GCP=1
       shift
       ;;
     --project-id)
@@ -305,6 +311,36 @@ install_dependencies() {
   (cd frontend && npm install)
 }
 
+prepare_gcp_project() {
+  if [[ "${PREPARE_GCP}" -eq 0 ]]; then
+    return
+  fi
+  if [[ "${MODE}" != "live" ]]; then
+    die "--prepare-gcp is only valid with --mode live."
+  fi
+  if [[ -z "${PROJECT_ID}" ]]; then
+    die "--prepare-gcp requires --project-id YOUR_PROJECT_ID."
+  fi
+  if ! command -v gcloud >/dev/null 2>&1; then
+    die "gcloud is not installed or not on PATH. Install the Google Cloud CLI, run gcloud auth login and gcloud auth application-default login, then retry."
+  fi
+
+  echo "==> preparing GCP project ${PROJECT_ID}"
+  gcloud config set project "${PROJECT_ID}"
+  gcloud auth application-default set-quota-project "${PROJECT_ID}"
+  gcloud services enable ces.googleapis.com
+
+  if [[ -z "${PROJECT_NUMBER}" ]]; then
+    PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)' | tr -d '\r' | tail -n 1)"
+    if [[ -z "${PROJECT_NUMBER}" ]]; then
+      die "Could not derive GCP project number for ${PROJECT_ID}. Pass --project-number PROJECT_NUMBER and retry."
+    fi
+    echo "==> derived GCP project number: ${PROJECT_NUMBER}"
+  else
+    echo "==> using supplied GCP project number: ${PROJECT_NUMBER}"
+  fi
+}
+
 configure_env() {
   local demo_mode="scripted"
   local vite_mode="scripted"
@@ -458,6 +494,7 @@ main() {
   choose_frontend_port
   choose_backend_port
   install_dependencies
+  prepare_gcp_project
   configure_env
   provision_live_agent
   warn_if_live_unprovisioned

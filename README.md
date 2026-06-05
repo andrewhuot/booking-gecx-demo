@@ -59,8 +59,8 @@ Useful launcher variants:
 # Offline scripted flow; opens /google. This is the default.
 ./scripts/run_turnkey_demo.sh --mode mock
 
-# Live GECX/CXAS flow; opens /google/live after provisioning the agent.
-./scripts/run_turnkey_demo.sh --mode live --provision-agent --project-id YOUR_PROJECT_ID
+# Live GECX/CXAS flow; prepares GCP, provisions the agent, and opens /google/live.
+./scripts/run_turnkey_demo.sh --mode live --prepare-gcp --provision-agent --project-id YOUR_PROJECT_ID
 
 # Keep the browser closed and print the URL instead.
 ./scripts/run_turnkey_demo.sh --no-open
@@ -90,6 +90,62 @@ Run the tests anytime (no cloud needed):
 backend/.venv/bin/python -m pytest backend/tests -q     # backend
 cd frontend && npm run test:run                         # frontend
 ```
+
+## New computer + new GCP project
+
+Use this when you copy the repo to a different machine and want to point the
+live demo at a fresh GCP project with better quota.
+
+1. Install the prerequisites: Python 3.12, `uv`, Node 18+, npm, and the Google
+   Cloud CLI.
+
+2. Authenticate once on the new computer:
+
+   ```bash
+   gcloud auth login
+   gcloud auth application-default login
+   ```
+
+3. From the repo root, run one command. Replace `YOUR_PROJECT_ID` with the new
+   project id:
+
+   ```bash
+   ./scripts/run_turnkey_demo.sh \
+     --mode live \
+     --prepare-gcp \
+     --provision-agent \
+     --project-id YOUR_PROJECT_ID
+   ```
+
+   The launcher installs local dependencies, creates `.env` if needed, sets the
+   gcloud project and ADC quota project, enables `ces.googleapis.com`, derives
+   `GCP_PROJECT_NUMBER`, provisions the CXAS app, writes `CXAS_APP_NAME`, starts
+   the backend/frontend, and opens `http://127.0.0.1:3000/google/live`.
+
+4. If the project has increased CES quota, raise the client-side pacing in
+   `.env` before the demo. The default is intentionally conservative:
+
+   ```ini
+   CXAS_REQUESTS_PER_MINUTE=12
+   ```
+
+5. Run the full desktop demo from the opened Google page: click the Booking.com
+   sponsored result, then use the message script below.
+
+To prepare the machine and provision the agent without starting servers:
+
+```bash
+./scripts/run_turnkey_demo.sh \
+  --mode live \
+  --prepare-gcp \
+  --provision-agent \
+  --project-id YOUR_PROJECT_ID \
+  --setup-only
+```
+
+If your organization requires someone else to enable APIs, run the same command
+without `--prepare-gcp` after they enable `ces.googleapis.com`, or pass
+`--project-number PROJECT_NUMBER` explicitly.
 
 ## Desktop demo script
 
@@ -145,30 +201,25 @@ I'm in New York City.
 Everything is environment-driven — **no code edits needed** to target a different
 project or run your own independent copy of the agent.
 
-1. **Authenticate** to your project and enable the CES API:
+1. **Authenticate** to your project:
 
    ```bash
    export PROJECT_ID=YOUR_PROJECT_ID
    gcloud auth login
    gcloud auth application-default login
-   gcloud config set project "$PROJECT_ID"
-   gcloud auth application-default set-quota-project "$PROJECT_ID"
-   gcloud services enable ces.googleapis.com
-   export PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
-   # Optional, only for the voice scenario's TTS:
-   # gcloud services enable texttospeech.googleapis.com
    ```
 
 2. **Run the turnkey live launcher**. It installs dependencies, writes the GCP
-   values into `.env`, provisions the CXAS app, starts both local servers, and
-   opens `/google/live`:
+   values into `.env`, sets the gcloud project/quota project, enables the CES
+   API, derives the project number, provisions the CXAS app, starts both local
+   servers, and opens `/google/live`:
 
    ```bash
    ./scripts/run_turnkey_demo.sh \
      --mode live \
+     --prepare-gcp \
      --provision-agent \
-     --project-id "$PROJECT_ID" \
-     --project-number "$PROJECT_NUMBER"
+     --project-id "$PROJECT_ID"
    ```
 
    To deploy a separately named copy of the app, add:
@@ -177,14 +228,14 @@ project or run your own independent copy of the agent.
    --display-name "My Concierge" --app-id my-concierge --model gemini-2.5-flash
    ```
 
-   Preview the provisioning commands without touching the cloud:
+   Preview the CXAS provisioning commands without pushing the app or changing
+   GCP service state:
 
    ```bash
    ./scripts/run_turnkey_demo.sh \
      --mode live \
      --dry-run-provision \
      --project-id "$PROJECT_ID" \
-     --project-number "$PROJECT_NUMBER" \
      --setup-only
    ```
 

@@ -76,12 +76,44 @@ cd frontend && npm run dev -- --host 127.0.0.1 --port 3000
 - [x] Milestone 4 complete
 - [x] Milestone 5 complete
 
+## Current Update — New Computer GCP Portability
+
+### Goal
+Make it easy to copy this repo to a new computer, point it at a new Google Cloud project with better quota, provision the CXAS app, and run the live desktop demo without editing code or hand-populating `.env`.
+
+### Relevant Files
+- `scripts/run_turnkey_demo.sh` - one-command launcher and environment writer.
+- `README.md` - operator-facing runbook for new machines and new GCP projects.
+- `backend/tests/test_turnkey_launcher.py` - shell launcher regression tests.
+- `.env.example` - documented configuration defaults.
+
+### Constraints
+- Do not commit secrets or local `.env` values.
+- Keep GCP changes opt-in because enabling APIs and changing gcloud config are local/cloud side effects.
+- Preserve the existing mock path and existing live path.
+- Use the existing launcher instead of introducing a competing setup script.
+
+### Acceptance Criteria
+- `./scripts/run_turnkey_demo.sh --help` explains `--prepare-gcp`.
+- In setup-only mode with a fake `gcloud`, `--prepare-gcp --project-id X` writes `GCP_PROJECT_ID=X`, derives `GCP_PROJECT_NUMBER`, and keeps live-mode env values.
+- The README contains a clear "New computer + new GCP project" recipe.
+- Existing launcher behavior remains unchanged when `--prepare-gcp` is omitted.
+
+### Progress
+- [x] Current launcher and README inspected.
+- [x] Failing tests written.
+- [x] Launcher implementation complete.
+- [x] README updated.
+- [x] Validation complete.
+- [x] Changes committed and pushed.
+
 ## Decision Log
 - 2026-06-04 00:00 — Use path-based mode selection because the request asked for a subtle toggle and the existing UI already has presenter controls for visible mode switching.
 - 2026-06-04 00:00 — Keep Part 1 on the desktop chat channel and leave the existing voice channel untouched because the script explicitly says Part 2 will be handled separately.
 - 2026-06-04 00:00 — Reuse the existing Zustand demo engine and chat components because the repo already has mock/live parity and the requested change is a new flow, not a new app shell.
 - 2026-06-04 00:00 — Revised per user direction: the ad click should stay on desktop, not launch the mobile frame.
 - 2026-06-04 17:30 — Add `scripts/run_turnkey_demo.sh` as the primary launcher so demoers can run the full desktop ad-to-chat flow from one terminal while preserving manual server commands for troubleshooting.
+- 2026-06-05 01:00 — Add opt-in `--prepare-gcp` to the same launcher so new-machine live setup can enable CES, set gcloud project and ADC quota project, derive `GCP_PROJECT_NUMBER`, provision the app, and start the demo from one command after the user authenticates.
 
 ## Notes / Blockers
 - Live mode depends on the backend and CXAS credentials being available at runtime; mock mode remains independent of that external state.
