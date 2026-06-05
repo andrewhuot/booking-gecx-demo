@@ -12,7 +12,8 @@ interface ChatWindowProps {
 const WELCOME_TEXT =
   "Hi! I'm your Booking.com assistant. I can help you find the perfect stay, manage a booking, or answer questions. What are you looking for?";
 
-// The expanded 400×560 chat window: navy header, scrollable conversation, input.
+// The expanded desktop chat window: large, docked, and prominent because it is
+// the centerpiece of the July 4 demo flow.
 export function ChatWindow({ onClose }: ChatWindowProps) {
   const messages = useDemoStore((s) => s.messages);
   const isTyping = useDemoStore((s) => s.isTyping);
@@ -95,19 +96,24 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
   };
 
   return (
-    <div className="flex h-[600px] max-h-[calc(100vh-22rem)] min-h-[420px] w-[420px] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-card bg-white shadow-widget animate-widget-open">
+    <div
+      data-testid="booking-chat-window"
+      role="dialog"
+      aria-label="Booking.com Assistant chat"
+      className="flex h-[720px] max-h-[calc(100vh-3rem)] min-h-[620px] w-[560px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-card bg-white shadow-[0_20px_70px_rgba(0,0,0,0.28)] animate-widget-open"
+    >
       {/* Header */}
-      <header className="flex shrink-0 items-center justify-between bg-bc-navy px-4 py-3.5 text-white">
-        <div className="flex items-center gap-3">
+      <header className="flex shrink-0 items-center justify-between bg-bc-navy px-5 py-4 text-white">
+        <div className="flex items-center gap-3.5">
           <span
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-2xl"
             aria-hidden
           >
             ✦
           </span>
           <div className="leading-tight">
-            <div className="text-base font-bold">Booking.com Assistant</div>
-            <div className="flex items-center gap-1 text-[11px] text-white/75">
+            <div className="text-lg font-bold">Booking.com Assistant</div>
+            <div className="mt-0.5 flex items-center gap-1 text-[12px] text-white/75">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
               ✦ Powered by Gemini
             </div>
@@ -126,7 +132,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
       {/* Body */}
       <div
         ref={scrollRef}
-        className="thin-scrollbar flex-1 space-y-3 overflow-y-auto bg-bc-gray-100 px-4 py-4"
+        className="thin-scrollbar flex-1 space-y-4 overflow-y-auto bg-bc-gray-100 px-5 py-5"
       >
         {showBuiltInWelcome && (
           <div className="flex w-full items-start gap-2 animate-msg-in">
@@ -137,7 +143,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
               ✦
             </div>
             <div className="max-w-[85%]">
-              <div className="rounded-2xl rounded-tl-sm border border-bc-gray-200 bg-white px-3.5 py-2 text-sm leading-snug text-bc-gray-900 shadow-card">
+              <div className="rounded-2xl rounded-tl-sm border border-bc-gray-200 bg-white px-4 py-3 text-[15px] leading-snug text-bc-gray-900 shadow-card">
                 {WELCOME_TEXT}
               </div>
               <button
@@ -163,7 +169,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
       {/* Input bar */}
       <form
         onSubmit={handleSubmit}
-        className="flex shrink-0 items-center gap-2 border-t border-bc-gray-200 bg-white px-3 py-2.5"
+        className="flex shrink-0 items-center gap-3 border-t border-bc-gray-200 bg-white px-4 py-3.5"
       >
         <input
           type="text"
@@ -171,12 +177,12 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Type a message..."
           aria-label="Type a message"
-          className="flex-1 rounded-full border border-bc-gray-200 bg-bc-gray-100 px-4 py-2 text-sm text-bc-gray-900 outline-none transition-colors placeholder:text-bc-gray-500 focus:border-bc-blue focus:bg-white"
+          className="flex-1 rounded-full border border-bc-gray-200 bg-bc-gray-100 px-5 py-3 text-[15px] text-bc-gray-900 outline-none transition-colors placeholder:text-bc-gray-500 focus:border-bc-blue focus:bg-white"
         />
         <button
           type="submit"
           aria-label="Send message"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bc-blue text-white transition-colors hover:bg-bc-blue-dark"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-bc-blue text-white transition-colors hover:bg-bc-blue-dark"
         >
           <svg
             width="18"

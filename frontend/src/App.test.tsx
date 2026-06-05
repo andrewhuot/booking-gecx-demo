@@ -45,6 +45,32 @@ describe('App July 4 desktop demo routing', () => {
     expect(screen.queryByText('Assistant • online')).not.toBeInTheDocument();
   });
 
+  it('renders a richer Google-style results page for the ad warm start', () => {
+    render(<App />);
+
+    expect(screen.getByRole('searchbox', { name: 'Search' })).toHaveValue(
+      'July 4th getaway',
+    );
+    expect(screen.getByText('Sponsored results')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', {
+        name: /Booking\.com.*July 4th Weekend Getaways/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        name: /Cheap 4th of July Getaways/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        name: /Best Fourth of July Weekend Getaways/i,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('AI Mode')).toBeInTheDocument();
+    expect(screen.getByText('Tools')).toBeInTheDocument();
+  });
+
   it('advances the desktop mock chat through the first typed user turn', async () => {
     render(<App />);
 

@@ -23,4 +23,13 @@ describe('ChatWidget', () => {
     render(<ChatWidget />);
     expect(screen.getByLabelText('Minimize chat')).toBeInTheDocument();
   });
+
+  it('renders the expanded chat as a large primary demo surface', () => {
+    render(<ChatWidget />);
+
+    expect(screen.getByTestId('booking-chat-window')).toHaveClass(
+      'w-[560px]',
+      'min-h-[620px]',
+    );
+  });
 });
