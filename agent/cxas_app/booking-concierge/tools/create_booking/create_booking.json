@@ -4,6 +4,6 @@
   "pythonFunction": {
     "name": "create_booking",
     "pythonCode": "tools/create_booking/python_function/python_code.py",
-    "description": "Create the booking after the guest confirms the summary and payment method (Phase 3). Pass property_id, room_id, check_in, check_out (YYYY-MM-DD), guest_name, and payment_method (reference the method on file only). Returns the confirmation_number and a payload that renders a confirmation card and navigates to the confirmation page. Announce the returned confirmation number exactly."
+    "description": "Create the final booking after the guest confirms the July 4 package and saved payment. For the July 4 demo pass destination_id='marthas-vineyard', hotel_id='summercamp', flight_id='jetblue', experience_id='sunset-sailing', travelers=2, and payment_method. Returns confirmation BK-4JUL-29571 with a confirmation card payload. The older Sedona booking mode still works when property_id and room_id are passed."
   }
 }

@@ -91,12 +91,17 @@ def _fmt_dates(check_in: str, check_out: str) -> str:
 
 
 def create_booking(
-    property_id: str,
+    property_id: str = "",
     room_id: str = "",
     check_in: str = "",
     check_out: str = "",
     guest_name: str = "",
     payment_method: str = "card on file",
+    destination_id: str = "",
+    hotel_id: str = "",
+    flight_id: str = "",
+    experience_id: str = "",
+    travelers: int = 0,
 ) -> dict:
     """Book the stay and return a confirmation card payload.
 
@@ -112,6 +117,29 @@ def create_booking(
       Dict with confirmation_number, success, and a payload that renders a
       confirmation card and navigates to the confirmation page.
     """
+    if destination_id or hotel_id or flight_id or experience_id:
+        card = {
+            "type": "confirmation",
+            "confirmationNumber": "BK-4JUL-29571",
+            "property": "Summercamp Hotel",
+            "dates": "Jul 3 - Jul 6, 2026",
+            "room": "Two guests · 3 nights",
+            "nights": 3,
+            "total": "$1,561",
+            "status": "Confirmed",
+        }
+        return {
+            "confirmation_number": "BK-4JUL-29571",
+            "destination": "Martha's Vineyard",
+            "hotel": "Summercamp Hotel",
+            "flight": "JetBlue JFK↔MVY",
+            "experience": "Sunset Sailing Cruise",
+            "travelers": travelers or 2,
+            "total": 1561,
+            "success": True,
+            "payload": {"action": "create_booking", "card": card},
+        }
+
     property_id = _canonical_id(property_id)
     rooms = _ROOMS.get(property_id)
     if not rooms:

@@ -32,6 +32,87 @@ _ROOMS = {
     ],
 }
 
+_JULY4_OPTIONS = {
+    "hotels": {
+        "variant": "hotel",
+        "title": "Martha's Vineyard hotels",
+        "options": [
+            {
+                "id": "harbor-view",
+                "title": "Harbor View Hotel",
+                "subtitle": "⭐ 4.6 · Edgartown · Waterfront",
+                "price": "$289/night · $867 total",
+                "description": "Steps from Edgartown Harbor. Classic Vineyard charm, rooftop deck, complimentary bikes.",
+                "replyText": "Harbor View looks good",
+            },
+            {
+                "id": "summercamp",
+                "title": "Summercamp Hotel",
+                "subtitle": "⭐ 4.4 · Oak Bluffs · Near beach",
+                "price": "$245/night · $735 total",
+                "description": "Renovated with a playful, retro vibe. Pool, fire pits, live music, and walking distance to the ferry.",
+                "replyText": "This one — looks fun and the price is right",
+            },
+            {
+                "id": "christopher",
+                "title": "The Christopher",
+                "subtitle": "⭐ 4.7 · Edgartown · Boutique",
+                "price": "$310/night · $930 total",
+                "description": "Intimate boutique hotel with a celebrated on-site restaurant. Quiet luxury.",
+                "replyText": "The Christopher sounds nice",
+            },
+        ],
+    },
+    "flights": {
+        "variant": "flight",
+        "title": "NYC to Martha's Vineyard flights",
+        "options": [
+            {
+                "id": "jetblue",
+                "title": "JetBlue",
+                "subtitle": "JFK → MVY · Nonstop",
+                "meta": "Depart 9:15 AM → Arrive 10:05 AM · Return 6:30 PM → 7:25 PM",
+                "price": "$318/person · $636 total for 2",
+                "description": "Nonstop from JFK — under an hour each way.",
+                "replyText": "JetBlue for sure",
+            },
+            {
+                "id": "cape-air",
+                "title": "Cape Air",
+                "subtitle": "BOS → MVY · Nonstop",
+                "meta": "Depart 11:00 AM → Arrive 11:35 AM · Return 4:45 PM → 5:20 PM",
+                "price": "$248/person · $496 total for 2",
+                "description": "A bit less, but you'd need to connect through Boston first.",
+                "replyText": "Cape Air is fine",
+            },
+        ],
+    },
+    "experiences": {
+        "variant": "experience",
+        "title": "Holiday weekend experiences",
+        "options": [
+            {
+                "id": "sunset-sailing",
+                "title": "Sunset Sailing Cruise",
+                "subtitle": "Edgartown Harbor · 2 hours",
+                "meta": "July 4 · Departs 6:30 PM",
+                "price": "$95/person · $190 for 2",
+                "description": "Watch the 250th anniversary fireworks from the water. BYOB, small group, golden hour views.",
+                "replyText": "The sunset cruise on July 4th sounds amazing, let’s do it",
+            },
+            {
+                "id": "bike-wine",
+                "title": "Island Bike & Wine Tour",
+                "subtitle": "Vineyard Haven → Aquinnah · 4 hours",
+                "meta": "July 5 · Departs 10:00 AM",
+                "price": "$75/person · $150 for 2",
+                "description": "A guided ride through rolling farmland with stops at two vineyards for tastings.",
+                "replyText": "The bike and wine tour sounds fun",
+            },
+        ],
+    },
+}
+
 
 def _canonical_id(property_id: str) -> str:
     """Normalize an LLM-supplied property id to the canonical hyphenated form.
@@ -58,10 +139,12 @@ def _nights_between(check_in: str, check_out: str) -> int:
 
 
 def check_availability(
-    property_id: str,
+    property_id: str = "",
     check_in: str = "",
     check_out: str = "",
     room_id: str = "",
+    stage: str = "",
+    destination_id: str = "",
 ) -> dict:
     """Return the recommended room, nights, and total for the stay.
 
@@ -75,6 +158,23 @@ def check_availability(
       Dict with room, nightly_rate, nights, total, success, and a payload that
       navigates to the property page and pre-selects the room.
     """
+    stage_key = (stage or "").strip().lower()
+    if stage_key in _JULY4_OPTIONS:
+        option_set = _JULY4_OPTIONS[stage_key]
+        card = {
+            "type": "choice_group",
+            "variant": option_set["variant"],
+            "title": option_set["title"],
+            "layout": "cards",
+            "options": list(option_set["options"]),
+        }
+        return {
+            "success": True,
+            "destination_id": destination_id or "marthas-vineyard",
+            "stage": stage_key,
+            "payload": {"action": "show_options", "card": card},
+        }
+
     property_id = _canonical_id(property_id)
     rooms = _ROOMS.get(property_id)
     if not rooms:

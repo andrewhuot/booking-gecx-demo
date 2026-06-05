@@ -2,6 +2,12 @@ import type { RenderedMessage, CardData } from '../../lib/types';
 import { PropertyCard } from './PropertyCard';
 import { ConfirmationCard } from './ConfirmationCard';
 import { UpsellCard } from './UpsellCard';
+import {
+  ChoiceGroupCard,
+  CostSummaryCard,
+  LocationPermissionCard,
+  PaymentPanelCard,
+} from './DemoFlowCards';
 
 interface ChatBubbleProps {
   message: RenderedMessage;
@@ -18,6 +24,14 @@ function CardRenderer({ card }: { card: CardData }) {
       return <UpsellCard data={card} />;
     case 'confirmation_update':
       return <ConfirmationCard update={card} />;
+    case 'location_permission':
+      return <LocationPermissionCard data={card} />;
+    case 'choice_group':
+      return <ChoiceGroupCard data={card} />;
+    case 'cost_summary':
+      return <CostSummaryCard data={card} />;
+    case 'payment_panel':
+      return <PaymentPanelCard data={card} />;
     default:
       return null;
   }
@@ -31,7 +45,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
   if (isUser) {
     return (
       <div className="flex w-full justify-end animate-msg-in">
-        <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-bc-blue px-3.5 py-2 text-sm leading-snug text-white shadow-card">
+        <div className="max-w-[80%] whitespace-pre-line rounded-2xl rounded-br-sm bg-bc-blue px-3.5 py-2 text-sm leading-snug text-white shadow-card">
           {message.text}
         </div>
       </div>
@@ -49,7 +63,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
       </div>
       <div className="max-w-[85%]">
         {message.text && (
-          <div className="rounded-2xl rounded-tl-sm border border-bc-gray-200 bg-white px-3.5 py-2 text-sm leading-snug text-bc-gray-900 shadow-card">
+          <div className="whitespace-pre-line rounded-2xl rounded-tl-sm border border-bc-gray-200 bg-white px-3.5 py-2 text-sm leading-snug text-bc-gray-900 shadow-card">
             {message.text}
           </div>
         )}

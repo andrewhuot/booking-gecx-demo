@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDemoStore } from './store/demoStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -14,6 +14,8 @@ import { ChatWidget } from './components/agent/ChatWidget';
 import { VoiceModal } from './components/voice/VoiceModal';
 import { MobileFrame } from './components/mobile/MobileFrame';
 import { PresenterPanel } from './components/presenter/PresenterPanel';
+import { GoogleSearchPage } from './components/pages/GoogleSearchPage';
+import { parseDemoPath } from './lib/demoRoutes';
 
 function CurrentView() {
   const view = useDemoStore((s) => s.view);
@@ -36,9 +38,23 @@ function CurrentView() {
 }
 
 export default function App() {
+  const [route, setRoute] = useState(() => parseDemoPath(window.location.pathname));
   useKeyboardShortcuts();
   useAutoPlay();
   const channel = useDemoStore((s) => s.channel);
+  const startJuly4Demo = useDemoStore((s) => s.startJuly4Demo);
+
+  useEffect(() => {
+    const onRoute = () => setRoute(parseDemoPath(window.location.pathname));
+    window.addEventListener('popstate', onRoute);
+    return () => window.removeEventListener('popstate', onRoute);
+  }, []);
+
+  useEffect(() => {
+    if (route.screen === 'booking-demo') {
+      startJuly4Demo(route.mode);
+    }
+  }, [route.mode, route.screen, startJuly4Demo]);
 
   // Probe the backend once on load so the presenter's live-mode toggle reflects
   // whether the CXAS bridge is actually reachable (lights the liveAvailable dot).
@@ -53,6 +69,10 @@ export default function App() {
       cancelled = true;
     };
   }, [checkHealth, setLiveAvailable]);
+
+  if (route.screen === 'google') {
+    return <GoogleSearchPage mode={route.mode} />;
+  }
 
   return (
     <div className="flex min-h-full flex-col bg-bc-gray-100">

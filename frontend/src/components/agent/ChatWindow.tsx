@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDemoStore } from '../../store/demoStore';
 import { useCXASAgent } from '../../hooks/useCXASAgent';
 import { MessageList } from './MessageList';
 import { QuickReplyChips } from './QuickReplyChips';
+import { CHAT_SUBMIT_EVENT, type ChatSubmitEventDetail } from './chatSubmitEvent';
 
 interface ChatWindowProps {
   onClose: () => void;
@@ -16,16 +17,19 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
   const messages = useDemoStore((s) => s.messages);
   const isTyping = useDemoStore((s) => s.isTyping);
   const mode = useDemoStore((s) => s.mode);
+  const scenario = useDemoStore((s) => s.scenario);
   const advance = useDemoStore((s) => s.advance);
   const pushUserMessage = useDemoStore((s) => s.pushUserMessage);
   const pushAgentMessage = useDemoStore((s) => s.pushAgentMessage);
   const setTyping = useDemoStore((s) => s.setTyping);
+  const submitScriptedTurn = useDemoStore((s) => s.submitScriptedTurn);
   const { sendMessage } = useCXASAgent();
 
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const hasUserMessage = messages.some((m) => m.role === 'user');
+  const showBuiltInWelcome = messages.length === 0;
 
   // Keep the conversation pinned to the latest message / typing indicator.
   useEffect(() => {
@@ -34,7 +38,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
   }, [messages, isTyping]);
 
   // Send the chip/typed text through the live backend (live mode only).
-  const submitLive = async (text: string) => {
+  const submitLive = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
     pushUserMessage(trimmed);
@@ -52,19 +56,37 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     } finally {
       setTyping(false);
     }
-  };
+  }, [pushAgentMessage, pushUserMessage, sendMessage, setTyping]);
+
+  const submitMessage = useCallback(
+    async (text: string) => {
+      if (mode === 'live') {
+        await submitLive(text);
+        return;
+      }
+      if (scenario === 'july4') {
+        submitScriptedTurn(text);
+        return;
+      }
+      advance();
+    },
+    [advance, mode, scenario, submitLive, submitScriptedTurn],
+  );
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<ChatSubmitEventDetail>).detail;
+      if (detail?.text) void submitMessage(detail.text);
+    };
+    window.addEventListener(CHAT_SUBMIT_EVENT, handler);
+    return () => window.removeEventListener(CHAT_SUBMIT_EVENT, handler);
+  }, [submitMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === 'live') {
-      const text = draft;
-      setDraft('');
-      void submitLive(text);
-    } else {
-      // Scripted mode: the input is decorative; Enter plays the next line.
-      setDraft('');
-      advance();
-    }
+    const text = draft;
+    setDraft('');
+    void submitMessage(text);
   };
 
   const switchToVoice = () => {
@@ -106,30 +128,33 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
         ref={scrollRef}
         className="thin-scrollbar flex-1 space-y-3 overflow-y-auto bg-bc-gray-100 px-4 py-4"
       >
-        {/* Pre-loaded welcome bubble */}
-        <div className="flex w-full items-start gap-2 animate-msg-in">
-          <div
-            className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bc-navy text-sm text-white"
-            aria-hidden
-          >
-            ✦
-          </div>
-          <div className="max-w-[85%]">
-            <div className="rounded-2xl rounded-tl-sm border border-bc-gray-200 bg-white px-3.5 py-2 text-sm leading-snug text-bc-gray-900 shadow-card">
-              {WELCOME_TEXT}
-            </div>
-            <button
-              type="button"
-              onClick={switchToVoice}
-              className="mt-1.5 pl-1 text-[11px] font-medium text-bc-blue hover:underline"
+        {showBuiltInWelcome && (
+          <div className="flex w-full items-start gap-2 animate-msg-in">
+            <div
+              className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bc-navy text-sm text-white"
+              aria-hidden
             >
-              Prefer to talk? Call our AI assistant →
-            </button>
+              ✦
+            </div>
+            <div className="max-w-[85%]">
+              <div className="rounded-2xl rounded-tl-sm border border-bc-gray-200 bg-white px-3.5 py-2 text-sm leading-snug text-bc-gray-900 shadow-card">
+                {WELCOME_TEXT}
+              </div>
+              <button
+                type="button"
+                onClick={switchToVoice}
+                className="mt-1.5 pl-1 text-[11px] font-medium text-bc-blue hover:underline"
+              >
+                Prefer to talk? Call our AI assistant →
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Quick replies — only before the user has said anything */}
-        {!hasUserMessage && <QuickReplyChips onSelect={(t) => void submitLive(t)} />}
+        {showBuiltInWelcome && !hasUserMessage && (
+          <QuickReplyChips onSelect={(t) => void submitMessage(t)} />
+        )}
 
         {/* Live conversation */}
         <MessageList />

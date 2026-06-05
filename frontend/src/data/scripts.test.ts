@@ -3,6 +3,7 @@ import { PROPERTIES, PROPERTY_MAP, getProperty } from './properties';
 import { RACHEL_SCRIPT } from './rachelScript';
 import { DAVID_SCRIPT } from './davidScript';
 import { MELISSA_SCRIPT } from './melissaScript';
+import { JULY4_SCRIPT } from './july4Script';
 import { SCRIPTS, SCENARIO_CHANNEL } from '../store/demoStore';
 import type { ScriptMessage } from '../lib/types';
 
@@ -46,6 +47,7 @@ describe('script registry', () => {
     expect(SCRIPTS.rachel).toBe(RACHEL_SCRIPT);
     expect(SCRIPTS.david).toBe(DAVID_SCRIPT);
     expect(SCRIPTS.melissa).toBe(MELISSA_SCRIPT.chat);
+    expect(SCRIPTS.july4).toBe(JULY4_SCRIPT);
   });
 
   it('maps every scenario to a real channel', () => {
@@ -53,6 +55,7 @@ describe('script registry', () => {
       rachel: 'chat',
       david: 'voice',
       melissa: 'mobile',
+      july4: 'chat',
     });
   });
 });

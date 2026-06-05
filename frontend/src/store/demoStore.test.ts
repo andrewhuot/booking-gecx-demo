@@ -244,6 +244,80 @@ describe('demoStore — mobile sub-flow', () => {
   });
 });
 
+describe('demoStore — July 4 turnkey demo', () => {
+  beforeEach(() => {
+    reset();
+    vi.useFakeTimers();
+  });
+
+  it('warm-starts the desktop Booking.com chat for the mock path', () => {
+    useDemoStore.getState().startJuly4Demo('scripted');
+    const s = useDemoStore.getState();
+    expect(s.mode).toBe('scripted');
+    expect(s.scenario).toBe('july4');
+    expect(s.channel).toBe('chat');
+    expect(s.mobileStage).toBe('home');
+    expect(s.messages).toHaveLength(1);
+    expect(s.messages[0].role).toBe('agent');
+    expect(s.messages[0].text).toContain("America's 250th");
+    expect(s.messageIndex).toBe(0);
+  });
+
+  it('keeps the same warm start but switches turns to live mode for /demo/live', () => {
+    useDemoStore.getState().startJuly4Demo('live');
+    const s = useDemoStore.getState();
+    expect(s.mode).toBe('live');
+    expect(s.scenario).toBe('july4');
+    expect(s.channel).toBe('chat');
+    expect(s.mobileStage).toBe('home');
+    expect(s.messages[0].text).toContain('flights, hotel, and things to do');
+  });
+
+  it('advances the mock chat by appending the typed user turn and next scripted response', () => {
+    useDemoStore.getState().startJuly4Demo('scripted');
+    useDemoStore.getState().submitScriptedTurn('Probably around $2,000 for everything');
+
+    expect(useDemoStore.getState().messages.at(-1)?.role).toBe('user');
+    expect(useDemoStore.getState().isTyping).toBe(true);
+
+    vi.runOnlyPendingTimers();
+    const s = useDemoStore.getState();
+    expect(s.isTyping).toBe(false);
+    expect(s.messages).toHaveLength(3);
+    expect(s.messages[1].text).toBe('Probably around $2,000 for everything');
+    expect(s.messages[2].card?.type).toBe('location_permission');
+    expect(s.messageIndex).toBe(1);
+  });
+
+  it('can complete the full mock July 4 chat through confirmation', () => {
+    useDemoStore.getState().startJuly4Demo('scripted');
+    const replies = [
+      'Probably around $2,000 for everything',
+      'Allow location',
+      '2 people',
+      'Beach & coast',
+      "Let's do the Vineyard — easy trip and we love it there",
+      'This one — looks fun and the price is right',
+      'JetBlue for sure',
+      'The sunset cruise on July 4th sounds amazing, let’s do it',
+      'Book This Trip',
+      'Use my saved Visa and confirm',
+    ];
+
+    for (const reply of replies) {
+      useDemoStore.getState().submitScriptedTurn(reply);
+      vi.runOnlyPendingTimers();
+    }
+
+    const s = useDemoStore.getState();
+    expect(s.messageIndex).toBe(SCRIPTS.july4.length);
+    expect(s.booking?.confirmationNumber).toBe('BK-4JUL-29571');
+    expect(s.booking?.total).toBe('$1,561');
+    expect(s.view).toBe('confirmation');
+    expect(s.messages.at(-1)?.text).toContain('BK-4JUL-29571');
+  });
+});
+
 describe('demoStore — reset', () => {
   beforeEach(reset);
 

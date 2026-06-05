@@ -2,7 +2,7 @@
 
 export type Channel = 'none' | 'chat' | 'voice' | 'mobile';
 export type ViewName = 'home' | 'search' | 'property' | 'confirmation';
-export type ScenarioId = 'rachel' | 'david' | 'melissa';
+export type ScenarioId = 'rachel' | 'david' | 'melissa' | 'july4';
 export type DemoMode = 'scripted' | 'live';
 export type MessageRole = 'user' | 'agent' | 'system';
 
@@ -82,11 +82,64 @@ export interface ConfirmationUpdateCardData {
   status: string;
 }
 
+export interface LocationPermissionCardData {
+  type: 'location_permission';
+  title: string;
+  body: string;
+  cta: string;
+  replyText: string;
+}
+
+export interface ChoiceOptionData {
+  id: string;
+  title: string;
+  subtitle?: string;
+  meta?: string;
+  price?: string;
+  description?: string;
+  imageLabel?: string;
+  icon?: string;
+  replyText: string;
+}
+
+export interface ChoiceGroupCardData {
+  type: 'choice_group';
+  variant: 'travelers' | 'destination_type' | 'destination' | 'hotel' | 'flight' | 'experience';
+  title: string;
+  layout: 'chips' | 'cards';
+  options: ChoiceOptionData[];
+}
+
+export interface CostSummaryRowData {
+  label: string;
+  value: string;
+}
+
+export interface CostSummaryCardData {
+  type: 'cost_summary';
+  title: string;
+  rows: CostSummaryRowData[];
+  total: string;
+  note?: string;
+  cta?: string;
+  replyText?: string;
+}
+
+export interface PaymentPanelCardData {
+  type: 'payment_panel';
+  title: string;
+  options: ChoiceOptionData[];
+}
+
 export type CardData =
   | PropertyCardData
   | ConfirmationCardData
   | UpsellCardData
-  | ConfirmationUpdateCardData;
+  | ConfirmationUpdateCardData
+  | LocationPermissionCardData
+  | ChoiceGroupCardData
+  | CostSummaryCardData
+  | PaymentPanelCardData;
 
 // ---- Site reactivity ----
 

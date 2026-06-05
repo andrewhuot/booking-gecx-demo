@@ -45,27 +45,44 @@ chat widget / presenter toggle  ──POST──▶ /api/chat
 ## Quickstart
 
 ```bash
-# 1. Backend deps + venv (creates backend/.venv, installs cxas-scrapi, seeds .env)
+./scripts/run_turnkey_demo.sh
+```
+
+That one command installs missing dependencies, creates `.env` if needed, starts
+the backend and frontend, and opens the desktop fake Google page at `/google`.
+Click the Booking.com sponsored result to enter the warm-start July 4 desktop
+chat flow. Press Ctrl-C in the launcher terminal to stop both servers.
+
+Useful launcher variants:
+
+```bash
+# Offline scripted flow; opens /google. This is the default.
+./scripts/run_turnkey_demo.sh --mode mock
+
+# Live GECX/CXAS flow; opens /google/live after provisioning the agent.
+./scripts/run_turnkey_demo.sh --mode live --provision-agent --project-id YOUR_PROJECT_ID
+
+# Keep the browser closed and print the URL instead.
+./scripts/run_turnkey_demo.sh --no-open
+
+# If port 3000 is busy, choose an allowed frontend port explicitly.
+./scripts/run_turnkey_demo.sh --frontend-port 3001
+```
+
+The launcher writes logs to `.demo/backend.log` and `.demo/frontend.log`. It
+sets `VITE_API_URL` for Vite and sets `DEMO_MODE` / `VITE_DEMO_MODE` to match the
+selected path-based mode.
+
+Manual startup is still available when you want separate terminals:
+
+```bash
 ./scripts/setup.sh
-
-# 2. Backend API
 backend/.venv/bin/python -m uvicorn backend.api:app --port 8000
-
-# 3. Frontend (separate terminal)
 cd frontend && npm install && npm run dev
 ```
 
-Open the URL Vite prints (**http://localhost:3000**). The backend serves on
-**http://localhost:8000** and starts in scripted mode unless you set
-`DEMO_MODE=live` (or flip the toggle in the UI). Stop either server with Ctrl-C
-(or `pkill -f "uvicorn backend.api:app"` / `pkill -f vite`).
-
-- **Scripted demo:** press **⌘⇧P** for the presenter panel, pick a scenario
-  (or **⌘⇧1/2/3**), and press **Space** to advance. Works with no cloud setup.
-- **Live demo:** see the next section to provision an agent, then in the presenter
-  panel flip the **scripted → live** toggle and chat with the agent. The toggle's
-  indicator turns green only when the backend reports CXAS reachable
-  (`GET /api/health`).
+Open **http://localhost:3000/google** for the mock ad-to-chat flow, or
+**http://localhost:3000/google/live** for the live-mode ad-to-chat flow.
 
 Run the tests anytime (no cloud needed):
 
@@ -82,15 +99,48 @@ project or run your own independent copy of the agent.
 1. **Authenticate** to your project and enable the CES API:
 
    ```bash
+   export PROJECT_ID=YOUR_PROJECT_ID
    gcloud auth login
    gcloud auth application-default login
-   gcloud config set project YOUR_PROJECT_ID
+   gcloud config set project "$PROJECT_ID"
+   gcloud auth application-default set-quota-project "$PROJECT_ID"
    gcloud services enable ces.googleapis.com
+   export PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
    # Optional, only for the voice scenario's TTS:
    # gcloud services enable texttospeech.googleapis.com
    ```
 
-2. **Configure** `.env` (copy the template if you haven't):
+2. **Run the turnkey live launcher**. It installs dependencies, writes the GCP
+   values into `.env`, provisions the CXAS app, starts both local servers, and
+   opens `/google/live`:
+
+   ```bash
+   ./scripts/run_turnkey_demo.sh \
+     --mode live \
+     --provision-agent \
+     --project-id "$PROJECT_ID" \
+     --project-number "$PROJECT_NUMBER"
+   ```
+
+   To deploy a separately named copy of the app, add:
+
+   ```bash
+   --display-name "My Concierge" --app-id my-concierge --model gemini-2.5-flash
+   ```
+
+   Preview the provisioning commands without touching the cloud:
+
+   ```bash
+   ./scripts/run_turnkey_demo.sh \
+     --mode live \
+     --dry-run-provision \
+     --project-id "$PROJECT_ID" \
+     --project-number "$PROJECT_NUMBER" \
+     --setup-only
+   ```
+
+3. **Manual configuration path** (optional). If you prefer to edit `.env`
+   yourself, copy the template:
 
    ```bash
    cp .env.example .env      # setup.sh also does this
@@ -112,8 +162,9 @@ project or run your own independent copy of the agent.
    CXAS_MODEL=gemini-2.5-flash
    ```
 
-3. **Provision the agent** (lints the app tree, pushes it, and writes
-   `CXAS_APP_NAME` back into `.env`):
+4. **Manual agent provisioning** (optional). The launcher does this for you when
+   you pass `--provision-agent`. To run it yourself, use the command below. It
+   lints the app tree, pushes it, and writes `CXAS_APP_NAME` back into `.env`:
 
    ```bash
    backend/.venv/bin/python scripts/create_agent.py
@@ -130,16 +181,16 @@ project or run your own independent copy of the agent.
    Re-running is idempotent: if an app with that display name already exists, it's
    overwritten in place.
 
-4. **Smoke-test** the live agent, then run the demo:
+5. **Smoke-test** the live agent, then run the demo:
 
    ```bash
    backend/.venv/bin/python scripts/test_agent.py                # one scenario
    backend/.venv/bin/python scripts/test_agent.py --all          # all three
-   DEMO_MODE=live backend/.venv/bin/python -m uvicorn backend.api:app --port 8000
+   ./scripts/run_turnkey_demo.sh --mode live --skip-install
    ```
 
-That's it — the backend reads `CXAS_APP_NAME` from `.env`, and the presenter
-panel's **live** toggle now talks to *your* agent.
+That's it — the backend reads `CXAS_APP_NAME` from `.env`, and `/google/live`
+now talks to *your* agent through the same desktop chat surface.
 
 ### Configuration reference
 
@@ -178,6 +229,7 @@ agent/agent_config.example.json     Template; create_agent.py writes a gitignore
 backend/                            FastAPI bridge + config + tests
 frontend/                           React/Vite site, chat/voice/mobile, demo engine
 scripts/setup.sh                    Backend venv + deps + .env bootstrap
+scripts/run_turnkey_demo.sh         One-command desktop demo launcher
 scripts/create_agent.py             Provision/deploy the agent (env-driven, CLI-overridable)
 scripts/test_agent.py               Live smoke test of the golden scenarios
 docs/superpowers/                   Design spec + implementation plan

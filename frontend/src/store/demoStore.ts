@@ -12,11 +12,13 @@ import type {
 import { RACHEL_SCRIPT } from '../data/rachelScript';
 import { DAVID_SCRIPT } from '../data/davidScript';
 import { MELISSA_SCRIPT } from '../data/melissaScript';
+import { JULY4_SCRIPT, JULY4_WARM_START } from '../data/july4Script';
 
 export const SCRIPTS: Record<ScenarioId, ScriptMessage[]> = {
   rachel: RACHEL_SCRIPT,
   david: DAVID_SCRIPT,
   melissa: MELISSA_SCRIPT.chat,
+  july4: JULY4_SCRIPT,
 };
 
 // Which channel each scenario uses.
@@ -24,6 +26,7 @@ export const SCENARIO_CHANNEL: Record<ScenarioId, Channel> = {
   rachel: 'chat',
   david: 'voice',
   melissa: 'mobile',
+  july4: 'chat',
 };
 
 export interface ViewParams {
@@ -78,6 +81,8 @@ interface DemoState {
   advance: () => void; // play next scripted message
   resetScenario: () => void;
   startTimerIfNeeded: () => void;
+  startJuly4Demo: (mode: DemoMode) => void;
+  submitScriptedTurn: (text: string) => void;
 
   applySiteAction: (action: SiteAction) => void;
   navigateTo: (view: ViewName, params?: ViewParams) => void;
@@ -223,6 +228,71 @@ export const useDemoStore = create<DemoState>((set, get) => ({
       voiceActive: s.channel === 'voice',
       mobileStage: 'home',
     });
+  },
+
+  startJuly4Demo: (mode) => {
+    const warmStart: RenderedMessage = {
+      ...JULY4_WARM_START,
+      id: nextId(),
+      ts: Date.now(),
+    };
+    set({
+      mode,
+      scenario: 'july4',
+      channel: 'chat',
+      messages: [warmStart],
+      messageIndex: 0,
+      isTyping: false,
+      capability: warmStart.capability,
+      view: 'home',
+      viewParams: {},
+      booking: null,
+      voiceActive: false,
+      mobileStage: 'home',
+      timerStart: null,
+    });
+  },
+
+  submitScriptedTurn: (text) => {
+    const s = get();
+    const trimmed = text.trim();
+    if (!trimmed || s.mode === 'live' || s.isTyping) return;
+
+    get().startTimerIfNeeded();
+    const userMessage: RenderedMessage = {
+      role: 'user',
+      text: trimmed,
+      delay: 0,
+      capability: s.capability,
+      id: nextId(),
+      ts: Date.now(),
+    };
+    const script = SCRIPTS[s.scenario];
+    const next = script[s.messageIndex];
+
+    set((st) => ({
+      messages: [...st.messages, userMessage],
+      isTyping: Boolean(next && next.role === 'agent' && next.delay > 0),
+    }));
+
+    if (!next) return;
+
+    const commit = () => {
+      const rendered: RenderedMessage = { ...next, id: nextId(), ts: Date.now() };
+      set((st) => ({
+        messages: [...st.messages, rendered],
+        messageIndex: st.messageIndex + 1,
+        isTyping: false,
+        capability: next.capability || st.capability,
+      }));
+      if (next.siteAction) get().applySiteAction(next.siteAction);
+    };
+
+    if (next.role === 'agent' && next.delay > 0) {
+      window.setTimeout(commit, next.delay);
+    } else {
+      commit();
+    }
   },
 
   pushUserMessage: (text) => {

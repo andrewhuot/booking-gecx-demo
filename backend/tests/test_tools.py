@@ -175,3 +175,61 @@ def test_add_upsell_tolerates_id_variants():
     out = t.add_upsell(confirmation_number="BK-1", property_id="mii_amo", current_total=975)
     assert out["payload"]["card"]["addOn"] == "Intention-Setting Session"
     assert out["payload"]["card"]["updatedTotal"] == "$1,155"
+
+
+# --------------------------------------------------------------------------- #
+# July 4 turnkey chat flow for the Booking.com CEO demo
+# --------------------------------------------------------------------------- #
+def test_july4_destination_search_returns_choice_group_payload():
+    t = _tool("search_properties")
+    out = t.search_properties(
+        destination_type="beach_coast",
+        budget_total=2000,
+        travelers=2,
+        origin="New York City",
+        check_in="2026-07-03",
+        check_out="2026-07-06",
+    )
+    assert out["success"] is True
+    card = out["payload"]["card"]
+    assert out["payload"]["action"] == "show_options"
+    assert card["type"] == "choice_group"
+    assert card["variant"] == "destination"
+    assert [option["title"] for option in card["options"]] == [
+        "Martha's Vineyard, MA",
+        "Outer Banks, NC",
+        "Kennebunkport, ME",
+    ]
+    assert card["options"][0]["price"] == "~$1,600"
+
+
+def test_july4_hotel_flight_experience_and_booking_payloads():
+    availability = _tool("check_availability")
+
+    hotels = availability.check_availability(stage="hotels", destination_id="marthas-vineyard")
+    assert hotels["success"] is True
+    assert hotels["payload"]["card"]["variant"] == "hotel"
+    assert hotels["payload"]["card"]["options"][1]["title"] == "Summercamp Hotel"
+
+    flights = availability.check_availability(stage="flights", destination_id="marthas-vineyard")
+    assert flights["payload"]["card"]["variant"] == "flight"
+    assert flights["payload"]["card"]["options"][0]["title"] == "JetBlue"
+
+    experiences = availability.check_availability(stage="experiences", destination_id="marthas-vineyard")
+    assert experiences["payload"]["card"]["variant"] == "experience"
+    assert experiences["payload"]["card"]["options"][0]["title"] == "Sunset Sailing Cruise"
+
+    booking = _tool("create_booking").create_booking(
+        destination_id="marthas-vineyard",
+        hotel_id="summercamp",
+        flight_id="jetblue",
+        experience_id="sunset-sailing",
+        travelers=2,
+        payment_method="Visa ending in 4242",
+    )
+    assert booking["success"] is True
+    assert booking["confirmation_number"] == "BK-4JUL-29571"
+    card = booking["payload"]["card"]
+    assert card["type"] == "confirmation"
+    assert card["property"] == "Summercamp Hotel"
+    assert card["total"] == "$1,561"

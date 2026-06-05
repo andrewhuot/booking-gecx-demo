@@ -56,6 +56,36 @@ _PROPERTIES = [
 
 _BY_ID = {p["id"]: p for p in _PROPERTIES}
 
+_JULY4_DESTINATIONS = [
+    {
+        "id": "marthas-vineyard",
+        "title": "Martha's Vineyard, MA",
+        "imageLabel": "Menemsha harbor at golden hour",
+        "meta": "30-min flight from NYC or ~5hr drive",
+        "price": "~$1,600",
+        "description": "Classic New England coastline, charming villages, seafood shacks, and calm beaches. Easy to reach and perfect for a relaxed long weekend without the flight hassle.",
+        "replyText": "Let's do the Vineyard — easy trip and we love it there",
+    },
+    {
+        "id": "outer-banks",
+        "title": "Outer Banks, NC",
+        "imageLabel": "Wild horses on a wide, empty beach",
+        "meta": "~1.5hr flight to Norfolk + 1hr drive",
+        "price": "~$1,400",
+        "description": "Miles of unspoiled barrier island beaches, wild horses, and laid-back Southern coastal charm. Great value, big skies, and quiet beaches.",
+        "replyText": "Show me the Outer Banks",
+    },
+    {
+        "id": "kennebunkport",
+        "title": "Kennebunkport, ME",
+        "imageLabel": "Rocky coastline with a lighthouse",
+        "meta": "~1.5hr flight to Portland + 30min drive",
+        "price": "~$1,750",
+        "description": "Rugged New England coastline meets charming seaside village. Lobster rolls, tidal pools, and cooler temps if you want to escape the summer heat.",
+        "replyText": "Show me Kennebunkport",
+    },
+]
+
 
 def _fmt_price(value):
     """Format a number as a display price string, e.g. 1017 -> '$1,017'."""
@@ -81,6 +111,10 @@ def search_properties(
     check_in: str = "",
     check_out: str = "",
     location: str = "Sedona, AZ",
+    destination_type: str = "",
+    budget_total: float = 0,
+    travelers: int = 0,
+    origin: str = "",
 ) -> dict:
     """Return the single best-fit property plus a card payload.
 
@@ -97,6 +131,24 @@ def search_properties(
       Dict with match data, success=True, and a payload that renders a property
       card and highlights it in search results.
     """
+    if destination_type or budget_total or travelers or origin:
+        card = {
+            "type": "choice_group",
+            "variant": "destination",
+            "title": "July 4th beach destinations",
+            "layout": "cards",
+            "options": list(_JULY4_DESTINATIONS),
+        }
+        return {
+            "success": True,
+            "origin": origin or "New York City",
+            "budget_total": budget_total,
+            "travelers": travelers or 2,
+            "check_in": check_in,
+            "check_out": check_out,
+            "payload": {"action": "show_options", "card": card},
+        }
+
     try:
         budget = float(budget_per_night or 0)
     except (TypeError, ValueError):

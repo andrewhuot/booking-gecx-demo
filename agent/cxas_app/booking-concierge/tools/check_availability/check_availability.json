@@ -4,6 +4,6 @@
   "pythonFunction": {
     "name": "check_availability",
     "pythonCode": "tools/check_availability/python_function/python_code.py",
-    "description": "Check availability and pricing for a chosen property and dates before quoting a total (Phase 3). Pass property_id plus check_in and check_out (YYYY-MM-DD). Returns the recommended room, nights, and total, and a payload that opens the property page with the room pre-selected. Use the returned nightly rate, nights, and total verbatim."
+    "description": "For the July 4 demo, pass stage='hotels', stage='flights', or stage='experiences' plus destination_id='marthas-vineyard' to render the next set of package choices. The older Sedona availability mode still works when property_id, check_in, and check_out are passed."
   }
 }

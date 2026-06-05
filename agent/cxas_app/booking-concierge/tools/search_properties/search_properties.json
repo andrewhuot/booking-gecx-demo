@@ -4,6 +4,6 @@
   "pythonFunction": {
     "name": "search_properties",
     "pythonCode": "tools/search_properties/python_function/python_code.py",
-    "description": "Find the single best-fit Sedona property for the traveler's vibe and budget. Call this when you are ready to recommend (Phase 2). Pass vibe (spa_wellness, romance_couples, solo_reset, nature_hiking, value, unique_design) and, if known, budget_per_night, party, check_in, check_out. Returns the best match plus a payload that renders a property card and highlights it on the site."
+    "description": "For the July 4 demo, recommend beach destinations by passing destination_type='beach_coast', budget_total, travelers, origin, check_in, and check_out. Returns a choice_group payload with Martha's Vineyard, Outer Banks, and Kennebunkport destination cards. The older Sedona property mode still works when vibe/budget_per_night are passed."
   }
 }

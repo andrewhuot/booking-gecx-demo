@@ -1,7 +1,17 @@
 import { useCallback, useRef } from 'react';
 import type { ScriptMessage, CardData, SiteAction } from '../lib/types';
 
-const API_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000';
+interface ApiLocation {
+  protocol: string;
+  hostname: string;
+}
+
+export function resolveApiUrl(configuredUrl: string | undefined, location: ApiLocation): string {
+  if (configuredUrl) return configuredUrl;
+  return `${location.protocol}//${location.hostname}:8000`;
+}
+
+const API_URL = resolveApiUrl(import.meta.env.VITE_API_URL as string | undefined, window.location);
 
 interface BackendChatResponse {
   agent_response: string;
