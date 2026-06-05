@@ -53,6 +53,23 @@ the backend and frontend, and opens the desktop fake Google page at `/google`.
 Click the Booking.com sponsored result to enter the warm-start July 4 desktop
 chat flow. Press Ctrl-C in the launcher terminal to stop both servers.
 
+## Start from the search page
+
+Use these commands when you want the demo to begin on the fake Google Search
+page. In both modes, click the Booking.com sponsored result to enter the
+warm-start chat.
+
+```bash
+# Mock/offline demo; opens http://127.0.0.1:3000/google
+./scripts/run_turnkey_demo.sh --mode mock
+
+# Live CXAS demo after .env already has CXAS_APP_NAME; opens /google/live
+./scripts/run_turnkey_demo.sh --mode live
+
+# First live run on a new GCP project; prepares GCP, provisions, then opens /google/live
+./scripts/run_turnkey_demo.sh --mode live --prepare-gcp --provision-agent --project-id YOUR_PROJECT_ID
+```
+
 Useful launcher variants:
 
 ```bash
