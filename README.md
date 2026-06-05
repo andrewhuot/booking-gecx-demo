@@ -13,8 +13,8 @@ It runs in two modes:
 - **Live** — the chat talks to a **real Google CX Agent Studio (CES/CXAS) agent**
   via the [`cxas-scrapi`](https://github.com/GoogleCloudPlatform/cxas-scrapi) SDK.
   The agent calls real tools (`search_properties`, `check_availability`,
-  `create_booking`, `add_upsell`) and the structured responses drive the cards
-  and the on-screen navigation.
+  `prepare_checkout`, `create_booking`, `add_upsell`) and the structured
+  responses drive the cards and the on-screen navigation.
 
 ## Architecture
 
@@ -23,7 +23,7 @@ Frontend (React + Vite + Zustand)        Backend (FastAPI)              Google C
 ─────────────────────────────────        ─────────────────              ────────────────────────────────
 chat widget / presenter toggle  ──POST──▶ /api/chat
   useCXASAgent hook                         CXASClient.run_turn  ──────▶  Sessions.run(session_id, text)
-                                                                           └─ LLM agent + 4 python tools
+                                                                           └─ LLM agent + 5 python tools
                                             map_structured_response ◀────  get_structured_response()
   renders card + drives site   ◀──JSON──   {agent_response, cards, site_action}
 ```
@@ -32,7 +32,7 @@ chat widget / presenter toggle  ──POST──▶ /api/chat
 - `backend/` — FastAPI bridge (`/api/session`, `/api/chat`, `/api/health`) that
   proxies to CXAS and maps its structured response to the frontend's card shape.
 - `agent/cxas_app/booking-concierge/` — the **deployable CXAS app** (the agent,
-  its instruction, and the 4 tools) that `scripts/create_agent.py` pushes live.
+  its instruction, and the 5 tools) that `scripts/create_agent.py` pushes live.
 
 ## Prerequisites
 
@@ -89,6 +89,55 @@ Run the tests anytime (no cloud needed):
 ```bash
 backend/.venv/bin/python -m pytest backend/tests -q     # backend
 cd frontend && npm run test:run                         # frontend
+```
+
+## Desktop demo script
+
+Use this script for the full desktop flow from fake Google Search through saved
+payment checkout. It works in both mock mode (`/google`) and live mode
+(`/google/live`).
+
+1. Open the entry page:
+
+   - Mock/offline: `http://127.0.0.1:3000/google`
+   - Live GECX/CXAS: `http://127.0.0.1:3000/google/live`
+
+2. On the fake Google Search page, click the sponsored Booking.com result:
+   **Booking.com — July 4th Weekend Getaways**.
+
+3. The Booking.com homepage opens with the assistant already expanded. Send
+   these messages in order:
+
+   ```text
+   Around $2,000 total.
+   We're leaving from New York City, 2 people.
+   Beach and coast.
+   Martha's Vineyard looks good.
+   Choose Summercamp Hotel.
+   Pick the JetBlue nonstop flight.
+   Add the sunset sailing cruise.
+   Book this trip.
+   Use my saved Visa and confirm
+   ```
+
+4. Expected checkpoints:
+
+   - The warm-start message mentions July 4th and America's 250th birthday.
+   - `Beach and coast.` renders three destination cards.
+   - `Martha's Vineyard looks good.` renders hotel cards.
+   - `Choose Summercamp Hotel.` renders flight cards.
+   - `Pick the JetBlue nonstop flight.` renders experience cards.
+   - `Add the sunset sailing cruise.` summarizes the package at `$1,561`.
+   - `Book this trip.` renders the `Complete booking` payment panel.
+   - `Use my saved Visa and confirm` creates confirmation `BK-4JUL-29571`.
+
+In live mode, the model may occasionally ask for departure city and traveler
+count as separate prompts. If that happens, use these two messages instead of
+the combined second line:
+
+```text
+I'm in New York City.
+2 people.
 ```
 
 ## Point this at your own GCP project
@@ -224,7 +273,7 @@ needs none of the GCP settings.
 ## Repository layout
 
 ```
-agent/cxas_app/booking-concierge/   Deployable CXAS app (agent + 4 tools)
+agent/cxas_app/booking-concierge/   Deployable CXAS app (agent + 5 tools)
 agent/agent_config.example.json     Template; create_agent.py writes a gitignored agent_config.json on deploy
 backend/                            FastAPI bridge + config + tests
 frontend/                           React/Vite site, chat/voice/mobile, demo engine
