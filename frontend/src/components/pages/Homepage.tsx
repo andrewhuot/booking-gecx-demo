@@ -110,7 +110,10 @@ export function Homepage() {
       </section>
 
       {/* Search bar overlapping the hero */}
-      <div className="mx-auto -mt-8 max-w-[1128px] px-4">
+      <div
+        data-testid="homepage-search-shell"
+        className="relative z-10 mx-auto -mt-8 max-w-[1128px] px-4"
+      >
         <SearchBar />
       </div>
 
