@@ -107,6 +107,33 @@ Make it easy to copy this repo to a new computer, point it at a new Google Cloud
 - [x] Validation complete.
 - [x] Changes committed and pushed.
 
+## Current Update — Homepage Card Imagery
+
+### Goal
+Make the Booking.com-style homepage cards feel more premium by using the bundled
+landing photography more intentionally across destinations, property types, and
+inspiration cards.
+
+### Relevant Files
+- `frontend/src/components/pages/Homepage.tsx` - card data and visual rendering.
+- `frontend/src/components/pages/Homepage.test.tsx` - regression coverage for
+  matched image metadata.
+- `frontend/src/assets/landing/` - local image assets already bundled by Vite.
+
+### Acceptance Criteria
+- Destination, property type, and inspiration cards expose descriptive image alt
+  text that matches each card name.
+- Card image crops are tuned per card so the meaningful subject remains visible.
+- Visual treatment gives the images a more polished, high-quality presentation.
+- Frontend tests and build pass.
+
+### Progress
+- [x] Existing assets inspected.
+- [x] Failing image metadata test written.
+- [x] Homepage card presentation updated.
+- [x] Validation complete.
+- [x] Changes committed and pushed.
+
 ## Decision Log
 - 2026-06-04 00:00 — Use path-based mode selection because the request asked for a subtle toggle and the existing UI already has presenter controls for visible mode switching.
 - 2026-06-04 00:00 — Keep Part 1 on the desktop chat channel and leave the existing voice channel untouched because the script explicitly says Part 2 will be handled separately.

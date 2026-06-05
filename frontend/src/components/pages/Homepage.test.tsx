@@ -10,4 +10,18 @@ describe('Homepage', () => {
 
     expect(screen.getByTestId('homepage-search-shell')).toHaveClass('relative', 'z-10');
   });
+
+  it('uses descriptive matched photography for homepage cards', () => {
+    render(<Homepage />);
+
+    expect(
+      screen.getByRole('img', { name: 'Sedona red rock landscape' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: 'Hotels grand hotel facade' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: 'Wellness travel sunset yoga' }),
+    ).toBeInTheDocument();
+  });
 });
