@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDemoStore } from '../../store/demoStore';
 import { useCXASAgent } from '../../hooks/useCXASAgent';
-import { withLiveFallbackCard } from '../../lib/liveFallbackCards';
+import { getLiveFastPathMessage, withLiveFallbackCard } from '../../lib/liveFallbackCards';
 import { MessageList } from './MessageList';
 import { QuickReplyChips } from './QuickReplyChips';
 import { CHAT_SUBMIT_EVENT, type ChatSubmitEventDetail } from './chatSubmitEvent';
@@ -46,6 +46,12 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     pushUserMessage(trimmed);
     setTyping(true);
     try {
+      const fastPathMessage = getLiveFastPathMessage(trimmed, scenario);
+      if (fastPathMessage) {
+        pushAgentMessage(fastPathMessage);
+        return;
+      }
+
       const result = await sendMessage(trimmed, 'chat');
       pushAgentMessage(withLiveFallbackCard(result, scenario));
     } catch {

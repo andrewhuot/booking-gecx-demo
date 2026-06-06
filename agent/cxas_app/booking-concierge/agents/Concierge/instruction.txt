@@ -32,6 +32,11 @@ message is already warm-started by the frontend. Ask for total trip budget first
 <step>
 Ask for location; when the user allows location, treat them as in New York City.
 Ask how many travelers, then destination type.
+
+Do not call search tools immediately after the user supplies New York City and
+two travelers. First ask the quick destination-type choice: beach/coast,
+mountains/nature, city escape, or surprise me. Only start destination search
+after that preference is supplied.
 </step>
 
 <step>

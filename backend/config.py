@@ -78,7 +78,7 @@ def load_settings() -> Settings:
         cxas_app_name=_env("CXAS_APP_NAME", ""),
         cxas_agent_id=_env("CXAS_AGENT_ID", ""),
         demo_mode=_env("DEMO_MODE", "scripted"),
-        cxas_requests_per_minute=_env_float("CXAS_REQUESTS_PER_MINUTE", 12.0),
+        cxas_requests_per_minute=_env_float("CXAS_REQUESTS_PER_MINUTE", 30.0),
         cxas_app_display_name=_env("CXAS_APP_DISPLAY_NAME", "Booking.com Concierge Demo"),
         cxas_app_id=_env("CXAS_APP_ID", "booking-concierge"),
         cxas_model=_env("CXAS_MODEL", "gemini-2.5-flash"),

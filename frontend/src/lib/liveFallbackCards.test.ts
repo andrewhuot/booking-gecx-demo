@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ChoiceGroupCardData, ScriptMessage } from './types';
-import { withLiveFallbackCard } from './liveFallbackCards';
+import { getLiveFastPathMessage, withLiveFallbackCard } from './liveFallbackCards';
 
 function liveAgentMessage(text: string): ScriptMessage {
   return {
@@ -85,5 +85,29 @@ describe('withLiveFallbackCard', () => {
     const message = withLiveFallbackCard(liveAgentMessage('How many people are traveling?'), 'rachel');
 
     expect(message.card).toBeUndefined();
+  });
+});
+
+describe('getLiveFastPathMessage', () => {
+  it('returns the destination-type chip prompt for the slow July 4 origin and party-size turn', () => {
+    const message = getLiveFastPathMessage(
+      "We're leaving from New York City, 2 people.",
+      'july4',
+    );
+
+    expect(message?.text).toContain('What type of destination');
+    const card = asChoiceGroup(message as ScriptMessage);
+    expect(card.variant).toBe('destination_type');
+    expect(card.options.map((option) => option.title)).toEqual([
+      '🏖️ Beach & coast',
+      '🏔️ Mountains & nature',
+      '🏙️ City escape',
+      '🤷 Surprise me',
+    ]);
+  });
+
+  it('does not fast-path non-July 4 scenarios or unrelated text', () => {
+    expect(getLiveFastPathMessage("We're leaving from New York City, 2 people.", 'rachel')).toBeNull();
+    expect(getLiveFastPathMessage('Beach & coast', 'july4')).toBeNull();
   });
 });

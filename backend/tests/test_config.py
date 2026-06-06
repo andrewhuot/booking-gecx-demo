@@ -49,7 +49,7 @@ def test_defaults_are_project_neutral(monkeypatch):
     assert s.cxas_app_display_name == "Booking.com Concierge Demo"
     assert s.cxas_app_id == "booking-concierge"
     assert s.cxas_model == "gemini-2.5-flash"
-    assert s.cxas_requests_per_minute == 12.0
+    assert s.cxas_requests_per_minute == 30.0
 
 
 def test_env_overrides_everything(monkeypatch):
@@ -60,7 +60,7 @@ def test_env_overrides_everything(monkeypatch):
         GCP_LOCATION="us",
         CXAS_APP_NAME="projects/42/locations/us/apps/abc",
         DEMO_MODE="live",
-        CXAS_REQUESTS_PER_MINUTE="12",
+        CXAS_REQUESTS_PER_MINUTE="24",
         CXAS_APP_DISPLAY_NAME="My Concierge",
         CXAS_APP_ID="my-concierge",
         CXAS_MODEL="gemini-2.5-pro",
@@ -70,7 +70,7 @@ def test_env_overrides_everything(monkeypatch):
     assert s.gcp_project_number == "42"
     assert s.cxas_app_name == "projects/42/locations/us/apps/abc"
     assert s.is_live is True
-    assert s.cxas_requests_per_minute == 12.0
+    assert s.cxas_requests_per_minute == 24.0
     assert s.cxas_app_display_name == "My Concierge"
     assert s.cxas_app_id == "my-concierge"
     assert s.cxas_model == "gemini-2.5-pro"
@@ -78,7 +78,7 @@ def test_env_overrides_everything(monkeypatch):
 
 def test_invalid_requests_per_minute_falls_back(monkeypatch):
     mod = _reload_with_env(monkeypatch, CXAS_REQUESTS_PER_MINUTE="not-a-number")
-    assert mod.load_settings().cxas_requests_per_minute == 12.0
+    assert mod.load_settings().cxas_requests_per_minute == 30.0
 
 
 def teardown_module(module):  # noqa: D401 - restore the real module state

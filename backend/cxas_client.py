@@ -112,8 +112,8 @@ class CXASClient:
         """Return a shared RateLimiter sized to the CES per-minute token quota.
 
         The binding quota is ``RunSession LLM tokens``. The concierge prompt is
-        large, so the default is a modestly optimistic ~12 req/min for projects
-        with improved quota, while remaining overridable via ``.env``.
+        large, so the default is an optimistic ~30 req/min for fast demo
+        projects with improved quota, while remaining overridable via ``.env``.
         Returns ``None`` if the SDK's RateLimiter is unavailable (paces nothing).
         """
         if self._rate_limiter is None:

@@ -3,6 +3,9 @@ import type { ChoiceGroupCardData, ScenarioId, ScriptMessage } from './types';
 
 const travelerCard = findJuly4ChoiceCard('travelers');
 const destinationTypeCard = findJuly4ChoiceCard('destination_type');
+const destinationTypeMessage = JULY4_SCRIPT.find(
+  (message) => message.card?.type === 'choice_group' && message.card.variant === 'destination_type',
+);
 
 function findJuly4ChoiceCard(variant: ChoiceGroupCardData['variant']): ChoiceGroupCardData | undefined {
   const card = JULY4_SCRIPT.find(
@@ -27,6 +30,28 @@ function asksForDestinationType(text: string): boolean {
     /\bdestination sounds right\b/i.test(text) ||
     (/\bbeach/i.test(text) && /\bmountain/i.test(text) && /\bcity/i.test(text))
   );
+}
+
+function hasDepartureAndTravelerCount(text: string): boolean {
+  return (
+    /\b(leaving|departing|flying|traveling|travelling)\s+from\b/i.test(text) &&
+    /\b(new york city|nyc|new york)\b/i.test(text) &&
+    /\b(2|two)\s+(people|travelers|travellers|guests|adults)\b/i.test(text)
+  );
+}
+
+export function getLiveFastPathMessage(
+  userText: string,
+  scenario: ScenarioId,
+): ScriptMessage | null {
+  if (scenario !== 'july4' || !destinationTypeMessage || !hasDepartureAndTravelerCount(userText)) {
+    return null;
+  }
+
+  return {
+    ...destinationTypeMessage,
+    delay: 0,
+  };
 }
 
 export function withLiveFallbackCard(message: ScriptMessage, scenario: ScenarioId): ScriptMessage {
