@@ -40,6 +40,54 @@ function hasDepartureAndTravelerCount(text: string): boolean {
   );
 }
 
+function isDestinationRecommendationText(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return (
+    normalized.includes('fantastic beach destinations') &&
+    normalized.includes("martha's vineyard") &&
+    normalized.includes('outer banks') &&
+    normalized.includes('kennebunkport')
+  );
+}
+
+function isMarthasVineyardHotelIntro(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return (
+    normalized.includes("martha's vineyard") &&
+    normalized.includes('hotel') &&
+    (normalized.includes('july 3rd to july 6th') || normalized.includes('july 3') || normalized.includes('july 6'))
+  );
+}
+
+function polishLiveMessageText(message: ScriptMessage, scenario: ScenarioId): ScriptMessage {
+  if (scenario !== 'july4' || message.role !== 'agent' || !message.text) {
+    return message;
+  }
+
+  if (isDestinationRecommendationText(message.text)) {
+    return {
+      ...message,
+      text:
+        'Wonderful — I found three beach destinations for two from New York City that fit your July 4th budget.\n\n' +
+        "- **Martha's Vineyard, MA:** Classic New England coastline, charming villages, seafood shacks, and calm beaches. Easy from NYC and ideal for a relaxed long weekend.\n" +
+        '- **Outer Banks, NC:** Unspoiled beaches, wild horses, and a laid-back coastal vibe with strong value and quieter beaches.\n' +
+        '- **Kennebunkport, ME:** Rugged Maine coastline, lobster rolls, tidal pools, and cooler summer temperatures.\n\n' +
+        'Which one sounds most appealing?',
+    };
+  }
+
+  if (isMarthasVineyardHotelIntro(message.text)) {
+    return {
+      ...message,
+      text:
+        "Excellent choice — **Martha's Vineyard** is beautiful for the holiday weekend.\n\n" +
+        'Here are a few hotel options for **July 3-6** that keep the overall budget in mind.',
+    };
+  }
+
+  return message;
+}
+
 export function getLiveFastPathMessage(
   userText: string,
   scenario: ScenarioId,
@@ -55,17 +103,19 @@ export function getLiveFastPathMessage(
 }
 
 export function withLiveFallbackCard(message: ScriptMessage, scenario: ScenarioId): ScriptMessage {
-  if (scenario !== 'july4' || message.role !== 'agent' || message.card) {
-    return message;
+  const polishedMessage = polishLiveMessageText(message, scenario);
+
+  if (scenario !== 'july4' || polishedMessage.role !== 'agent' || polishedMessage.card) {
+    return polishedMessage;
   }
 
-  if (travelerCard && asksForTravelerCount(message.text)) {
-    return { ...message, card: travelerCard };
+  if (travelerCard && asksForTravelerCount(polishedMessage.text)) {
+    return { ...polishedMessage, card: travelerCard };
   }
 
-  if (destinationTypeCard && asksForDestinationType(message.text)) {
-    return { ...message, card: destinationTypeCard };
+  if (destinationTypeCard && asksForDestinationType(polishedMessage.text)) {
+    return { ...polishedMessage, card: destinationTypeCard };
   }
 
-  return message;
+  return polishedMessage;
 }

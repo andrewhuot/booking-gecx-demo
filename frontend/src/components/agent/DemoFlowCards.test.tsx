@@ -61,4 +61,28 @@ describe('ChoiceGroupCard', () => {
       screen.getByRole('img', { name: 'Sailboat in Edgartown Harbor at sunset' }),
     ).toBeInTheDocument();
   });
+
+  it('renders card photos as absolute fill media so no card-top gap can show through', () => {
+    const data: ChoiceGroupCardData = {
+      type: 'choice_group',
+      variant: 'destination',
+      title: 'July 4th beach destinations',
+      layout: 'cards',
+      options: [
+        {
+          id: 'outer-banks',
+          title: 'Outer Banks, NC',
+          imageLabel: 'Wild horses on a wide, empty beach',
+          replyText: 'Show me the Outer Banks',
+        },
+      ],
+    };
+
+    render(<ChoiceGroupCard data={data} />);
+
+    const image = screen.getByRole('img', { name: 'Wild horses on a wide, empty beach' });
+    expect(image).toHaveClass('absolute');
+    expect(image).toHaveClass('inset-0');
+    expect(image).toHaveClass('block');
+  });
 });

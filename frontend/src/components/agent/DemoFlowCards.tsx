@@ -105,7 +105,7 @@ export function ChoiceGroupCard({ data }: { data: ChoiceGroupCardData }) {
                         alt={mediaAlt}
                         onError={hideImageOnError}
                         style={{ objectPosition: media.position || 'center center' }}
-                        className="h-full w-full object-cover saturate-[1.05] transition-transform duration-700 group-hover:scale-105"
+                        className="absolute inset-0 block h-full w-full object-cover saturate-[1.05] transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (
                       <div className="flex h-full items-end px-3 py-2">

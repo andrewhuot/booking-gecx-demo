@@ -17,6 +17,38 @@ function asChoiceGroup(message: ScriptMessage): ChoiceGroupCardData {
 }
 
 describe('withLiveFallbackCard', () => {
+  it('formats the live July 4 destination recommendation as bold bullet points', () => {
+    const message = withLiveFallbackCard(
+      liveAgentMessage(
+        "Wonderful! I've found a few fantastic beach destinations for two people traveling from New York City for the July 4th weekend, all within your budget.\n\n" +
+          "Here are some options I think you'll love:\n\n" +
+          "Martha's Vineyard, MA: A classic New England getaway with charming villages and beautiful beaches. It's an easy trip from NYC, perfect for a relaxed long weekend.\n\n" +
+          "Outer Banks, NC: If you're looking for unspoiled beaches, wild horses, and a laid-back vibe, the Outer Banks offers great value and quiet beaches.\n\n" +
+          "Kennebunkport, ME: This destination combines rugged coastline with a charming seaside village, known for its lobster rolls and cooler temperatures.\n\n" +
+          'Which of these sounds most appealing to you?',
+      ),
+      'july4',
+    );
+
+    expect(message.text).toContain("- **Martha's Vineyard, MA:**");
+    expect(message.text).toContain('- **Outer Banks, NC:**');
+    expect(message.text).toContain('- **Kennebunkport, ME:**');
+    expect(message.text).not.toContain('Here are some options I think');
+  });
+
+  it('formats the live Martha’s Vineyard hotel intro as short readable paragraphs', () => {
+    const message = withLiveFallbackCard(
+      liveAgentMessage(
+        "Excellent choice! Martha's Vineyard is beautiful. I've found a few hotels for you there, keeping your budget in mind for a July 3rd to July 6th stay.",
+      ),
+      'july4',
+    );
+
+    expect(message.text).toContain("**Martha's Vineyard**");
+    expect(message.text).toContain('**July 3-6**');
+    expect(message.text).not.toContain("I've found a few hotels for you there");
+  });
+
   it('adds traveler chips when a July 4 live reply asks for party size without cards', () => {
     const message = withLiveFallbackCard(
       liveAgentMessage(
