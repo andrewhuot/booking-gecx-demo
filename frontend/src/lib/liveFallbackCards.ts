@@ -69,6 +69,18 @@ function isFlightOptionsText(text: string): boolean {
   );
 }
 
+function isExperienceUpsellText(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return (
+    normalized.includes('jetblue') &&
+    normalized.includes('summercamp hotel') &&
+    normalized.includes('remaining budget') &&
+    normalized.includes('sunset sailing') &&
+    normalized.includes('bike') &&
+    normalized.includes('wine')
+  );
+}
+
 function polishLiveMessageText(message: ScriptMessage, scenario: ScenarioId): ScriptMessage {
   if (scenario !== 'july4' || message.role !== 'agent' || !message.text) {
     return message;
@@ -104,6 +116,17 @@ function polishLiveMessageText(message: ScriptMessage, scenario: ScenarioId): Sc
         '- **JetBlue nonstop:** JFK → MVY, under an hour each way, **$636 total for 2**.\n' +
         '- **Cape Air via Boston:** JFK → BOS → MVY, **$496 total for 2**. It is a bit cheaper, but adds the Boston connection.\n\n' +
         'Which flight option works best?',
+    };
+  }
+
+  if (isExperienceUpsellText(message.text)) {
+    return {
+      ...message,
+      text:
+        "**You're currently $629 under budget!** Would you like to add one memorable holiday experience and still stay comfortably within your $2,000 plan?\n\n" +
+        '- **Sunset Sailing Cruise:** Watch the July 4 fireworks from Edgartown Harbor, **$190 total for 2**.\n' +
+        '- **Island Bike & Wine Tour:** A relaxed July 5 vineyard ride with tastings, **$150 total for 2**.\n\n' +
+        'Which add-on would make the trip feel complete?',
     };
   }
 

@@ -45,8 +45,10 @@ they choose Martha's Vineyard, offer three hotels.
 </step>
 
 <step>
-If they choose Summercamp Hotel, offer flights. If they choose JetBlue, show the
-remaining budget and offer experiences.
+If they choose Summercamp Hotel, offer flights. If they choose JetBlue, make the
+experience upsell budget-first: say "You're currently $629 under budget!" and
+ask whether they would like to add one memorable holiday experience while still
+staying within the $2,000 plan.
 </step>
 
 <step>

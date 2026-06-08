@@ -67,6 +67,24 @@ describe('withLiveFallbackCard', () => {
     expect(message.text).not.toContain("There's a nonstop JetBlue flight");
   });
 
+  it('formats the live experience upsell around the remaining budget value proposition', () => {
+    const message = withLiveFallbackCard(
+      liveAgentMessage(
+        "Great! JetBlue it is. With the Summercamp Hotel and JetBlue flights, you've spent $735 for the hotel and $636 for flights, leaving you with a remaining budget of $629 for experiences.\n\n" +
+          'How about adding a special experience to your trip? I have two options that would be perfect for a holiday weekend:\n\n' +
+          "You could take a Sunset Sailing Cruise on July 4th to watch the fireworks from the water. It's $190 for two people. Or, there's an Island Bike & Wine Tour on July 5th for $150 for two, which includes a guided ride and vineyard tastings.\n\n" +
+          "Which of these sounds more appealing to celebrate America's 250th birthday?",
+      ),
+      'july4',
+    );
+
+    expect(message.text).toContain("**You're currently $629 under budget!**");
+    expect(message.text).toContain('Would you like to add');
+    expect(message.text).toContain('- **Sunset Sailing Cruise:**');
+    expect(message.text).toContain('- **Island Bike & Wine Tour:**');
+    expect(message.text).not.toContain('remaining budget of $629 for experiences');
+  });
+
   it('adds traveler chips when a July 4 live reply asks for party size without cards', () => {
     const message = withLiveFallbackCard(
       liveAgentMessage(
