@@ -84,6 +84,8 @@ VENV_DIR="backend/.venv"
 VENV_PY="${VENV_DIR}/bin/python"
 PYTHON_BIN=""
 SELECTED_INSTALLER=""
+MIN_PYTHON_MAJOR=3
+MIN_PYTHON_MINOR=10
 
 echo "==> Booking.com GECX demo — backend setup"
 echo "    repo: ${REPO_ROOT}"
@@ -108,6 +110,29 @@ find_python() {
   fi
 }
 
+python_version_string() {
+  local python_bin="$1"
+  "${python_bin}" --version 2>&1 | awk '{print $2}'
+}
+
+check_python_version() {
+  local python_bin="$1"
+  local label="$2"
+  local version major minor
+  version="$(python_version_string "${python_bin}")"
+  major="${version%%.*}"
+  minor="${version#*.}"
+  minor="${minor%%.*}"
+
+  if [[ ! "${major}" =~ ^[0-9]+$ || ! "${minor}" =~ ^[0-9]+$ ]]; then
+    die "Could not parse ${label} version from '${version}'. Install Python 3.12 and rerun."
+  fi
+
+  if (( major < MIN_PYTHON_MAJOR || (major == MIN_PYTHON_MAJOR && minor < MIN_PYTHON_MINOR) )); then
+    die "${label} ${version} is too old. Python 3.10+ is required for this demo, and Python 3.12 is recommended. Install Python 3.12, then rerun with --backend-installer pip."
+  fi
+}
+
 select_installer() {
   if [[ "${BACKEND_INSTALLER}" == "uv" ]]; then
     command -v uv >/dev/null 2>&1 || die "uv is not installed or not on PATH. Re-run with --backend-installer pip if uv is blocked."
@@ -118,6 +143,7 @@ select_installer() {
   if [[ "${BACKEND_INSTALLER}" == "pip" ]]; then
     find_python
     [[ -n "${PYTHON_BIN}" ]] || die "python3.12 or python3 is required for --backend-installer pip."
+    check_python_version "${PYTHON_BIN}" "Selected Python"
     SELECTED_INSTALLER="pip"
     return
   fi
@@ -130,6 +156,7 @@ select_installer() {
   echo "==> uv not found; falling back to Python venv + pip"
   find_python
   [[ -n "${PYTHON_BIN}" ]] || die "uv is unavailable and python3.12/python3 was not found."
+  check_python_version "${PYTHON_BIN}" "Selected Python"
   SELECTED_INSTALLER="pip"
 }
 
@@ -152,6 +179,10 @@ else
     echo "==> creating venv at ${VENV_DIR} with python -m venv"
     run_cmd "${PYTHON_BIN}" -m venv "${VENV_DIR}"
   fi
+fi
+
+if [[ "${SELECTED_INSTALLER}" == "pip" && "${DRY_RUN}" -eq 0 ]]; then
+  check_python_version "${VENV_PY}" "Backend venv Python"
 fi
 
 # --- 3. Install core dependencies ---------------------------------------------

@@ -199,6 +199,36 @@ def test_setup_script_auto_falls_back_to_pip_when_uv_is_missing(tmp_path):
     assert "uv not found; falling back to Python venv + pip" in result.stdout
 
 
+def test_setup_script_rejects_old_python_for_pip_installer(tmp_path):
+    """Old Python versions fail FastAPI resolution, so setup should explain it."""
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_python = fake_bin / "python3"
+    fake_python.write_text(
+        "#!/usr/bin/env bash\n"
+        "case \"$*\" in\n"
+        "  \"--version\") printf 'Python 3.7.17\\n'; exit 0 ;;\n"
+        "  *) exit 0 ;;\n"
+        "esac\n",
+        encoding="utf-8",
+    )
+    fake_python.chmod(0o755)
+    env = os.environ.copy()
+    env["PATH"] = f"{fake_bin}{os.pathsep}/bin{os.pathsep}/usr/bin"
+
+    result = subprocess.run(
+        [str(SETUP_SCRIPT), "--dry-run", "--backend-installer", "pip"],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert "Python 3.10+ is required" in result.stderr
+    assert "Python 3.7.17" in result.stderr
+
+
 def test_turnkey_launcher_prepare_gcp_derives_project_number(tmp_path):
     """New-computer live setup can prepare GCP and write env without hand edits."""
     env_path = REPO_ROOT / ".env"

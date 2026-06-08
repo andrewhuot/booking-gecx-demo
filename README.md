@@ -256,6 +256,33 @@ If `uv` is blocked:
 It opens `http://127.0.0.1:3000/google` and runs the fully offline scripted
 flow.
 
+### If pip says "No matching distribution found for fastapi"
+
+Check Python first:
+
+```bash
+python3 --version
+```
+
+If it is older than Python 3.10, install Python 3.12 and rerun:
+
+```bash
+./scripts/bootstrap_new_project.sh \
+  --project-id YOUR_PROJECT_ID \
+  --backend-installer pip
+```
+
+If Python is 3.10+ and you still see that error, pip is probably using a
+restricted/private package index that does not mirror FastAPI. Check:
+
+```bash
+python3 -m pip config list
+```
+
+Either allow PyPI for this install or ask your package-index admin to mirror
+`fastapi`, `uvicorn`, `pydantic`, `python-dotenv`, `pytest`, and the GitHub
+source package `GoogleCloudPlatform/cxas-scrapi`.
+
 The repo assumes a faster project and defaults to:
 
 ```ini
