@@ -223,7 +223,7 @@ including an optional CXAS agent zip workflow.
 - [x] Bootstrap/export scripts implemented.
 - [x] README and `.env.example` updated.
 - [x] Validation complete.
-- [ ] Changes committed and pushed.
+- [x] Changes committed and pushed.
 
 ## Decision Log
 - 2026-06-04 00:00 — Use path-based mode selection because the request asked for a subtle toggle and the existing UI already has presenter controls for visible mode switching.
