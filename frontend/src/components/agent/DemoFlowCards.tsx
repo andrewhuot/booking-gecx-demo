@@ -15,8 +15,8 @@ function submit(text: string) {
 
 const OPTION_IMAGES: Record<string, { src: string; position?: string }> = {
   'marthas-vineyard': { src: chatImages.destMarthasVineyard, position: 'center 45%' },
-  'outer-banks': { src: chatImages.destOuterBanks, position: 'center 58%' },
-  kennebunkport: { src: chatImages.destKennebunkport, position: 'center center' },
+  'outer-banks': { src: chatImages.destOuterBanks, position: 'center top' },
+  kennebunkport: { src: chatImages.destKennebunkport, position: 'center top' },
   'harbor-view': { src: chatImages.hotelHarborView, position: 'center center' },
   summercamp: { src: chatImages.hotelSummercamp, position: 'center center' },
   christopher: { src: chatImages.hotelChristopher, position: 'center center' },
@@ -98,14 +98,20 @@ export function ChoiceGroupCard({ data }: { data: ChoiceGroupCardData }) {
                 option.title
               ) : (
                 <>
-                  <div className="relative h-28 overflow-hidden bg-gradient-to-br from-bc-blue-light via-white to-bc-yellow/30">
+                  <div
+                    className={
+                      media
+                        ? 'relative h-28 overflow-hidden bg-bc-gray-200'
+                        : 'relative h-28 overflow-hidden bg-gradient-to-br from-bc-blue-light via-white to-bc-yellow/30'
+                    }
+                  >
                     {media ? (
                       <img
                         src={media.src}
                         alt={mediaAlt}
                         onError={hideImageOnError}
                         style={{ objectPosition: media.position || 'center center' }}
-                        className="absolute inset-0 block h-full w-full object-cover saturate-[1.05] transition-transform duration-700 group-hover:scale-105"
+                        className="absolute -left-px -top-px block h-[calc(100%+2px)] w-[calc(100%+2px)] object-cover saturate-[1.05] transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (
                       <div className="flex h-full items-end px-3 py-2">

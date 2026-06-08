@@ -180,7 +180,7 @@ export const JULY4_SCRIPT: ScriptMessage[] = [
   {
     role: 'agent',
     text:
-      "**You're currently $629 under budget!** Would you like to add one memorable holiday experience and still stay comfortably within your $2,000 plan?\n\n" +
+      "**You're currently $629 under budget!** **Would you like to add an experience to your trip?** You can add one memorable holiday experience and still stay comfortably within your $2,000 plan.\n\n" +
       '- **Sunset Sailing Cruise:** Watch the July 4 fireworks from Edgartown Harbor, **$190 total for 2**.\n' +
       '- **Island Bike & Wine Tour:** A relaxed July 5 vineyard ride with tastings, **$150 total for 2**.\n\n' +
       'Which add-on would make the trip feel complete?',

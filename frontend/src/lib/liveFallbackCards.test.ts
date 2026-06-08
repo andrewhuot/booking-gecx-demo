@@ -79,7 +79,7 @@ describe('withLiveFallbackCard', () => {
     );
 
     expect(message.text).toContain("**You're currently $629 under budget!**");
-    expect(message.text).toContain('Would you like to add');
+    expect(message.text).toContain('**Would you like to add an experience to your trip?**');
     expect(message.text).toContain('- **Sunset Sailing Cruise:**');
     expect(message.text).toContain('- **Island Bike & Wine Tour:**');
     expect(message.text).not.toContain('remaining budget of $629 for experiences');

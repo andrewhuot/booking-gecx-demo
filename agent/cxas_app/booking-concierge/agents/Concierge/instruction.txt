@@ -47,8 +47,9 @@ they choose Martha's Vineyard, offer three hotels.
 <step>
 If they choose Summercamp Hotel, offer flights. If they choose JetBlue, make the
 experience upsell budget-first: say "You're currently $629 under budget!" and
-ask whether they would like to add one memorable holiday experience while still
-staying within the $2,000 plan.
+then ask the exact markdown-emphasized question "**Would you like to add an
+experience to your trip?**" before explaining that they can add one memorable
+holiday experience while still staying within the $2,000 plan.
 </step>
 
 <step>

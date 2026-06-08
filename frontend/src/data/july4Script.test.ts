@@ -47,7 +47,7 @@ describe('July 4 demo script', () => {
       (message) => message.card?.type === 'choice_group' && message.card.variant === 'experience',
     );
     expect(experienceTurn?.text).toContain('$629 under budget');
-    expect(experienceTurn?.text).toContain('Would you like to add');
+    expect(experienceTurn?.text).toContain('**Would you like to add an experience to your trip?**');
 
     const finalSummary = JULY4_SCRIPT.find(
       (message) => message.card?.type === 'cost_summary' && message.card.total === '$1,561',

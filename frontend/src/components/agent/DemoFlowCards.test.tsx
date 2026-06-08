@@ -62,7 +62,7 @@ describe('ChoiceGroupCard', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders card photos as absolute fill media so no card-top gap can show through', () => {
+  it('overpaints destination photos so no card-top gap can show through', () => {
     const data: ChoiceGroupCardData = {
       type: 'choice_group',
       variant: 'destination',
@@ -75,14 +75,31 @@ describe('ChoiceGroupCard', () => {
           imageLabel: 'Wild horses on a wide, empty beach',
           replyText: 'Show me the Outer Banks',
         },
+        {
+          id: 'kennebunkport',
+          title: 'Kennebunkport, ME',
+          imageLabel: 'Rocky coast, lighthouse, crashing waves',
+          replyText: 'Show me Kennebunkport',
+        },
       ],
     };
 
     render(<ChoiceGroupCard data={data} />);
 
-    const image = screen.getByRole('img', { name: 'Wild horses on a wide, empty beach' });
-    expect(image).toHaveClass('absolute');
-    expect(image).toHaveClass('inset-0');
-    expect(image).toHaveClass('block');
+    const images = [
+      screen.getByRole('img', { name: 'Wild horses on a wide, empty beach' }),
+      screen.getByRole('img', { name: 'Rocky coast, lighthouse, crashing waves' }),
+    ];
+
+    images.forEach((image) => {
+      expect(image).toHaveClass('absolute');
+      expect(image).toHaveClass('-left-px');
+      expect(image).toHaveClass('-top-px');
+      expect(image).toHaveClass('h-[calc(100%+2px)]');
+      expect(image).toHaveClass('w-[calc(100%+2px)]');
+      expect(image).toHaveStyle({ objectPosition: 'center top' });
+      expect(image.parentElement).toHaveClass('bg-bc-gray-200');
+      expect(image.parentElement).not.toHaveClass('via-white');
+    });
   });
 });
