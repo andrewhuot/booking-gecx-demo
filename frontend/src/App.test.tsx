@@ -88,7 +88,8 @@ describe('App July 4 desktop demo routing', () => {
     await act(async () => {
       vi.advanceTimersByTime(900);
     });
-    expect(screen.getByText(/sharing your location/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Allow' })).toBeInTheDocument();
+    expect(screen.getByText(/Where are you departing from/i)).toBeInTheDocument();
+    expect(screen.getByText(/how many people are traveling/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Allow' })).not.toBeInTheDocument();
   });
 });

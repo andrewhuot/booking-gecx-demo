@@ -1,7 +1,18 @@
 import { JULY4_SCRIPT } from '../data/july4Script';
 import type { ChoiceGroupCardData, ScenarioId, ScriptMessage } from './types';
 
-const travelerCard = findJuly4ChoiceCard('travelers');
+const travelerCard = findJuly4ChoiceCard('travelers') ?? {
+  type: 'choice_group',
+  variant: 'travelers',
+  title: 'How many travelers?',
+  layout: 'chips',
+  options: [
+    { id: 'solo', title: 'Just me', replyText: 'Just me' },
+    { id: 'two', title: '2 people', replyText: '2 people' },
+    { id: 'small-group', title: '3-4 people', replyText: '3-4 people' },
+    { id: 'large-group', title: '5+', replyText: '5+' },
+  ],
+} satisfies ChoiceGroupCardData;
 const destinationTypeCard = findJuly4ChoiceCard('destination_type');
 const destinationTypeMessage = JULY4_SCRIPT.find(
   (message) => message.card?.type === 'choice_group' && message.card.variant === 'destination_type',

@@ -285,7 +285,9 @@ describe('demoStore — July 4 turnkey demo', () => {
     expect(s.isTyping).toBe(false);
     expect(s.messages).toHaveLength(3);
     expect(s.messages[1].text).toBe('Probably around $2,000 for everything');
-    expect(s.messages[2].card?.type).toBe('location_permission');
+    expect(s.messages[2].text).toContain('departing from');
+    expect(s.messages[2].text).toContain('how many people');
+    expect(s.messages[2].card).toBeUndefined();
     expect(s.messageIndex).toBe(1);
   });
 
@@ -293,8 +295,7 @@ describe('demoStore — July 4 turnkey demo', () => {
     useDemoStore.getState().startJuly4Demo('scripted');
     const replies = [
       'Probably around $2,000 for everything',
-      'Allow location',
-      '2 people',
+      "We're leaving from New York City, 2 people.",
       'Beach & coast',
       "Let's go with the Vineyard!",
       'This one — looks fun and the price is right',

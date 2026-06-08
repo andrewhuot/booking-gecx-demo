@@ -10,11 +10,15 @@ describe('July 4 demo script', () => {
 
   it('covers ad-click chat through final booking confirmation', () => {
     const cardTypes = JULY4_SCRIPT.map((message) => message.card?.type).filter(Boolean);
-    expect(cardTypes).toContain('location_permission');
+    expect(cardTypes).not.toContain('location_permission');
     expect(cardTypes).toContain('choice_group');
     expect(cardTypes).toContain('cost_summary');
     expect(cardTypes).toContain('payment_panel');
     expect(cardTypes).toContain('confirmation');
+
+    expect(JULY4_SCRIPT[0].text).toContain('departing from');
+    expect(JULY4_SCRIPT[0].text).toContain('how many people');
+    expect(JULY4_SCRIPT[0].card).toBeUndefined();
 
     const final = JULY4_SCRIPT.at(-1);
     expect(final?.text).toContain('BK-4JUL-29571');

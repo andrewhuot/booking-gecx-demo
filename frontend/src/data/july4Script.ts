@@ -12,38 +12,13 @@ export const JULY4_SCRIPT: ScriptMessage[] = [
   {
     role: 'agent',
     text:
-      "$2,000 all-in — there's a lot we can do with that. Would you mind sharing your location? It helps me find the best flight options and nearby destinations.",
+      "$2,000 all-in — there's a lot we can do with that. Where are you departing from, and how many people are traveling?",
     delay: 900,
-    capability: 'Conversational Budget Capture',
-    card: {
-      type: 'location_permission',
-      title: 'booking.com wants to know your location',
-      body: 'This lets the assistant find better flight options and nearby destinations.',
-      cta: 'Allow',
-      replyText: 'Allow location',
-    },
+    capability: 'Origin and Party Capture',
   },
   {
     role: 'agent',
-    text: 'Got it — New York City. Great home base with plenty of beach destinations in range.',
-    delay: 850,
-    capability: 'Profile-Assisted Grounding',
-    card: {
-      type: 'choice_group',
-      variant: 'travelers',
-      title: 'How many travelers?',
-      layout: 'chips',
-      options: [
-        { id: 'solo', title: 'Just me', replyText: 'Just me' },
-        { id: 'two', title: '2 people', replyText: '2 people' },
-        { id: 'small-group', title: '3-4 people', replyText: '3-4 people' },
-        { id: 'large-group', title: '5+', replyText: '5+' },
-      ],
-    },
-  },
-  {
-    role: 'agent',
-    text: 'Perfect — two travelers. What type of destination sounds right for the holiday weekend?',
+    text: 'Perfect — New York City for two travelers. What type of destination sounds right for the holiday weekend?',
     delay: 750,
     capability: 'Adaptive Input',
     card: {
