@@ -37,6 +37,8 @@ chat widget / presenter toggle  ──POST──▶ /api/chat
 ## Prerequisites
 
 - **Python 3.12** and [`uv`](https://docs.astral.sh/uv/) (for the backend venv).
+  If `uv` is blocked on your machine, the scripts can use Python's built-in
+  `venv` plus `pip` instead.
 - **Node 18+** and npm (for the frontend).
 - **Live mode only:** the [`gcloud` CLI](https://cloud.google.com/sdk/docs/install)
   and a GCP project with the **CES API** (`ces.googleapis.com`) enabled, plus
@@ -61,6 +63,12 @@ Moving to a new computer or a new GCP/CXAS project? Use:
 
 That wrapper runs the live setup path end to end: local dependencies, GCP prep,
 CXAS provisioning, servers, and `/google/live`.
+
+If `uv` is blocked on the machine, force the pip installer:
+
+```bash
+./scripts/bootstrap_new_project.sh --project-id YOUR_PROJECT_ID --backend-installer pip
+```
 
 ## How to run the demo
 
@@ -98,6 +106,9 @@ Useful launcher variants:
 
 # If port 3000 is busy, choose an allowed frontend port explicitly.
 ./scripts/run_turnkey_demo.sh --frontend-port 3001
+
+# If uv is blocked, use Python venv + pip for backend setup.
+./scripts/bootstrap_new_project.sh --project-id YOUR_PROJECT_ID --backend-installer pip
 ```
 
 The launcher writes logs to `.demo/backend.log` and `.demo/frontend.log`. It
@@ -151,6 +162,14 @@ GCP setup.
    ./scripts/bootstrap_new_project.sh --project-id YOUR_PROJECT_ID
    ```
 
+   If your company or laptop policy blocks `uv`, use:
+
+   ```bash
+   ./scripts/bootstrap_new_project.sh \
+     --project-id YOUR_PROJECT_ID \
+     --backend-installer pip
+   ```
+
    This command installs dependencies, creates `.env`, points gcloud at your
    project, enables `ces.googleapis.com`, finds the project number, provisions a
    new CXAS app, creates/updates deployment `live-demo`, starts the backend and
@@ -179,7 +198,8 @@ Copy that zip to the new computer, then run:
 ```bash
 ./scripts/bootstrap_new_project.sh \
   --project-id YOUR_PROJECT_ID \
-  --agent-zip /path/to/booking-concierge-cxas-agent.zip
+  --agent-zip /path/to/booking-concierge-cxas-agent.zip \
+  --backend-installer pip
 ```
 
 The zip may have `app.json` at the root or inside one nested app folder. The
@@ -225,6 +245,12 @@ No Google setup is needed:
 
 ```bash
 ./scripts/bootstrap_new_project.sh --mode mock
+```
+
+If `uv` is blocked:
+
+```bash
+./scripts/bootstrap_new_project.sh --mode mock --backend-installer pip
 ```
 
 It opens `http://127.0.0.1:3000/google` and runs the fully offline scripted

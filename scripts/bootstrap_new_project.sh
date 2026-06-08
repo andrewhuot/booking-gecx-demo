@@ -27,6 +27,7 @@ AGENT_ZIP=""
 HOST=""
 FRONTEND_PORT=""
 BACKEND_PORT=""
+BACKEND_INSTALLER="auto"
 PREPARE_GCP=1
 PROVISION_AGENT=1
 DRY_RUN_PROVISION=0
@@ -74,6 +75,7 @@ Options:
   --agent-zip VALUE         Provision from an exported/downloaded CXAS app zip.
   --frontend-port VALUE     Frontend port passed to the launcher.
   --backend-port VALUE      Backend port passed to the launcher.
+  --backend-installer VALUE Backend installer: auto, uv, or pip. Use pip if uv is blocked.
   --host VALUE              Host passed to the launcher.
   --no-prepare-gcp          Do not set gcloud project, quota project, or enable CES.
   --no-provision-agent      Do not push/create/update the CXAS app.
@@ -163,6 +165,11 @@ while [[ $# -gt 0 ]]; do
     --backend-port)
       need_value "$1" "${2:-}"
       BACKEND_PORT="$2"
+      shift 2
+      ;;
+    --backend-installer)
+      need_value "$1" "${2:-}"
+      BACKEND_INSTALLER="$2"
       shift 2
       ;;
     --host)
@@ -273,6 +280,7 @@ fi
 [[ -n "${HOST}" ]] && launcher_args+=(--host "${HOST}")
 [[ -n "${FRONTEND_PORT}" ]] && launcher_args+=(--frontend-port "${FRONTEND_PORT}")
 [[ -n "${BACKEND_PORT}" ]] && launcher_args+=(--backend-port "${BACKEND_PORT}")
+launcher_args+=(--backend-installer "${BACKEND_INSTALLER}")
 [[ "${SKIP_INSTALL}" -eq 1 ]] && launcher_args+=(--skip-install)
 [[ "${SETUP_ONLY}" -eq 1 ]] && launcher_args+=(--setup-only)
 [[ "${NO_OPEN}" -eq 1 ]] && launcher_args+=(--no-open)

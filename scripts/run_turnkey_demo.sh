@@ -21,6 +21,7 @@ SETUP_ONLY=0
 PROVISION_AGENT=0
 DRY_RUN_PROVISION=0
 PREPARE_GCP=0
+BACKEND_INSTALLER="auto"
 
 PROJECT_ID=""
 PROJECT_NUMBER=""
@@ -67,6 +68,7 @@ Options:
   --host VALUE              Bind both servers to this host (default 127.0.0.1).
   --frontend-port VALUE     Frontend port. Defaults to first free: 3000, 3001, 5173.
   --backend-port VALUE      Backend port. Defaults to first free: 8000, 8001, 8002.
+  --backend-installer VALUE Backend installer: auto, uv, or pip. Use pip if uv is blocked.
   --skip-install            Do not run setup.sh or npm install before launch.
   --setup-only              Install/configure/provision, then exit without servers.
   --no-open                 Print the URL instead of opening the browser.
@@ -180,6 +182,11 @@ while [[ $# -gt 0 ]]; do
     --backend-port)
       need_value "$1" "${2:-}"
       BACKEND_PORT="$2"
+      shift 2
+      ;;
+    --backend-installer)
+      need_value "$1" "${2:-}"
+      BACKEND_INSTALLER="$2"
       shift 2
       ;;
     --skip-install)
@@ -326,7 +333,7 @@ install_dependencies() {
     return
   fi
 
-  ./scripts/setup.sh
+  ./scripts/setup.sh --backend-installer "${BACKEND_INSTALLER}"
 
   if ! command -v npm >/dev/null 2>&1; then
     die "npm is not installed or not on PATH. Install Node 18+ and re-run."

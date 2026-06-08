@@ -13,6 +13,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / "scripts" / "run_turnkey_demo.sh"
+SETUP_SCRIPT = REPO_ROOT / "scripts" / "setup.sh"
 EXPORT_SCRIPT = REPO_ROOT / "scripts" / "export_cxas_agent.sh"
 BOOTSTRAP_SCRIPT = REPO_ROOT / "scripts" / "bootstrap_new_project.sh"
 
@@ -26,17 +27,18 @@ def _free_port() -> str:
 
 def test_turnkey_launcher_is_executable_and_shell_syntax_valid():
     """The launcher is a real executable Bash script."""
-    assert SCRIPT.exists()
-    assert os.access(SCRIPT, os.X_OK)
+    for script in (SCRIPT, SETUP_SCRIPT):
+        assert script.exists()
+        assert os.access(script, os.X_OK)
 
-    result = subprocess.run(
-        ["bash", "-n", str(SCRIPT)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+        result = subprocess.run(
+            ["bash", "-n", str(script)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
 
-    assert result.returncode == 0, result.stderr
+        assert result.returncode == 0, result.stderr
 
 
 def test_turnkey_launcher_help_explains_modes_routes_and_live_provisioning():
@@ -54,6 +56,7 @@ def test_turnkey_launcher_help_explains_modes_routes_and_live_provisioning():
     assert "--prepare-gcp" in result.stdout
     assert "--agent-zip" in result.stdout
     assert "--deployment-id" in result.stdout
+    assert "--backend-installer" in result.stdout
     assert "/google" in result.stdout
     assert "/google/live" in result.stdout
     assert "VITE_API_URL" in result.stdout
@@ -148,7 +151,52 @@ def test_bootstrap_new_project_help_describes_repo_and_zip_paths():
     assert result.returncode == 0
     assert "--project-id YOUR_PROJECT_ID" in result.stdout
     assert "--agent-zip" in result.stdout
+    assert "--backend-installer" in result.stdout
     assert "new computer" in result.stdout.lower()
+
+
+def test_setup_script_supports_pip_installer_dry_run():
+    """A uv-blocked machine can choose the Python venv + pip backend installer."""
+    result = subprocess.run(
+        [str(SETUP_SCRIPT), "--dry-run", "--backend-installer", "pip"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert "backend installer: pip" in result.stdout
+    assert "using Python venv + pip backend installer" in result.stdout
+    assert "python -m venv" in result.stdout
+
+
+def test_setup_script_auto_falls_back_to_pip_when_uv_is_missing(tmp_path):
+    """Auto mode should not hard-fail just because uv is unavailable."""
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_python = fake_bin / "python3"
+    fake_python.write_text(
+        "#!/usr/bin/env bash\n"
+        "case \"$*\" in\n"
+        "  \"--version\") printf 'Python 3.12.0\\n'; exit 0 ;;\n"
+        "  *) exit 0 ;;\n"
+        "esac\n",
+        encoding="utf-8",
+    )
+    fake_python.chmod(0o755)
+    env = os.environ.copy()
+    env["PATH"] = f"{fake_bin}{os.pathsep}/bin{os.pathsep}/usr/bin"
+
+    result = subprocess.run(
+        [str(SETUP_SCRIPT), "--dry-run"],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert "uv not found; falling back to Python venv + pip" in result.stdout
 
 
 def test_turnkey_launcher_prepare_gcp_derives_project_number(tmp_path):
