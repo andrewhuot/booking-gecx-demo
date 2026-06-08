@@ -7,6 +7,9 @@
   "app_display_name": "Booking.com Concierge Demo",
   "app_id": "booking-concierge",
   "app_name": null,
+  "deployment_id": null,
+  "deployment_name": null,
+  "version_name": null,
   "app_dir": "agent/cxas_app/booking-concierge",
   "model": "gemini-2.5-flash"
 }

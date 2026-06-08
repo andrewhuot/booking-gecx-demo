@@ -24,7 +24,7 @@ def _reload_with_env(monkeypatch, **env: str):
     monkeypatch.setattr(dotenv, "load_dotenv", lambda *a, **k: False)
     for key in (
         "GCP_PROJECT_ID", "GCP_PROJECT_NUMBER", "GCP_LOCATION",
-        "CXAS_APP_NAME", "CXAS_AGENT_ID", "DEMO_MODE",
+        "CXAS_APP_NAME", "CXAS_AGENT_ID", "CXAS_DEPLOYMENT_ID", "DEMO_MODE",
         "CXAS_REQUESTS_PER_MINUTE", "CXAS_APP_DISPLAY_NAME",
         "CXAS_APP_ID", "CXAS_MODEL",
     ):
@@ -59,6 +59,7 @@ def test_env_overrides_everything(monkeypatch):
         GCP_PROJECT_NUMBER="42",
         GCP_LOCATION="us",
         CXAS_APP_NAME="projects/42/locations/us/apps/abc",
+        CXAS_DEPLOYMENT_ID="live-demo",
         DEMO_MODE="live",
         CXAS_REQUESTS_PER_MINUTE="24",
         CXAS_APP_DISPLAY_NAME="My Concierge",
@@ -69,6 +70,7 @@ def test_env_overrides_everything(monkeypatch):
     assert s.gcp_project_id == "my-proj"
     assert s.gcp_project_number == "42"
     assert s.cxas_app_name == "projects/42/locations/us/apps/abc"
+    assert s.cxas_deployment_id == "live-demo"
     assert s.is_live is True
     assert s.cxas_requests_per_minute == 24.0
     assert s.cxas_app_display_name == "My Concierge"

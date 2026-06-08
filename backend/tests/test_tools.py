@@ -36,6 +36,7 @@ def test_tools_are_self_contained_no_shared_import():
     for name in (
         "search_properties",
         "check_availability",
+        "prepare_package_summary",
         "prepare_checkout",
         "create_booking",
         "add_upsell",
@@ -229,6 +230,26 @@ def test_july4_hotel_flight_experience_and_booking_payloads():
     experiences = availability.check_availability(stage="experiences", destination_id="marthas-vineyard")
     assert experiences["payload"]["card"]["variant"] == "experience"
     assert experiences["payload"]["card"]["options"][0]["title"] == "Sunset Sailing Cruise"
+
+    summary = _tool("prepare_package_summary").prepare_package_summary(
+        destination_id="marthas-vineyard",
+        hotel_id="summercamp",
+        flight_id="jetblue",
+        experience_id="sunset-sailing",
+        travelers=2,
+    )
+    assert summary["success"] is True
+    assert summary["payload"]["action"] == "prepare_package_summary"
+    summary_card = summary["payload"]["card"]
+    assert summary_card["type"] == "cost_summary"
+    assert summary_card["total"] == "$1,561"
+    assert summary_card["cta"] == "Book This Trip"
+    assert summary_card["replyText"] == "Book This Trip"
+
+    bad_summary = _tool("prepare_package_summary").prepare_package_summary(travelers=-1)
+    assert bad_summary["success"] is False
+    assert bad_summary["error"] == "invalid_travelers"
+    assert "agent_action" in bad_summary
 
     checkout = _tool("prepare_checkout").prepare_checkout(
         destination_id="marthas-vineyard",

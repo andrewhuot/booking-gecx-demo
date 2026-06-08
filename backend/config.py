@@ -54,6 +54,7 @@ class Settings:
     gcp_location: str
     cxas_app_name: str
     cxas_agent_id: str
+    cxas_deployment_id: str
     demo_mode: str
     # Client-side pacing for the CES per-minute "RunSession LLM tokens" quota.
     cxas_requests_per_minute: float
@@ -77,6 +78,7 @@ def load_settings() -> Settings:
         gcp_location=_env("GCP_LOCATION", "us"),
         cxas_app_name=_env("CXAS_APP_NAME", ""),
         cxas_agent_id=_env("CXAS_AGENT_ID", ""),
+        cxas_deployment_id=_env("CXAS_DEPLOYMENT_ID", ""),
         demo_mode=_env("DEMO_MODE", "scripted"),
         cxas_requests_per_minute=_env_float("CXAS_REQUESTS_PER_MINUTE", 30.0),
         cxas_app_display_name=_env("CXAS_APP_DISPLAY_NAME", "Booking.com Concierge Demo"),

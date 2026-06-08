@@ -1,5 +1,5 @@
 import { JULY4_SCRIPT } from '../data/july4Script';
-import type { ChoiceGroupCardData, ScenarioId, ScriptMessage } from './types';
+import type { CardData, ChoiceGroupCardData, ScenarioId, ScriptMessage } from './types';
 
 const travelerCard = findJuly4ChoiceCard('travelers') ?? {
   type: 'choice_group',
@@ -17,12 +17,19 @@ const destinationTypeCard = findJuly4ChoiceCard('destination_type');
 const destinationTypeMessage = JULY4_SCRIPT.find(
   (message) => message.card?.type === 'choice_group' && message.card.variant === 'destination_type',
 );
+const packageSummaryMessage = findJuly4MessageByCardType('cost_summary');
+const paymentPanelMessage = findJuly4MessageByCardType('payment_panel');
+const confirmationMessage = findJuly4MessageByCardType('confirmation');
 
 function findJuly4ChoiceCard(variant: ChoiceGroupCardData['variant']): ChoiceGroupCardData | undefined {
   const card = JULY4_SCRIPT.find(
     (message) => message.card?.type === 'choice_group' && message.card.variant === variant,
   )?.card;
   return card?.type === 'choice_group' ? card : undefined;
+}
+
+function findJuly4MessageByCardType(type: CardData['type']): ScriptMessage | undefined {
+  return JULY4_SCRIPT.find((message) => message.card?.type === type);
 }
 
 function asksForTravelerCount(text: string): boolean {
@@ -49,6 +56,64 @@ function hasDepartureAndTravelerCount(text: string): boolean {
     /\b(new york city|nyc|new york)\b/i.test(text) &&
     /\b(2|two)\s+(people|travelers|travellers|guests|adults)\b/i.test(text)
   );
+}
+
+function isSunsetSailingSelection(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return (
+    (normalized.includes('sunset') || normalized.includes('sailing')) &&
+    (normalized.includes('cruise') || normalized.includes('do it') || normalized.includes('sounds amazing'))
+  );
+}
+
+function isBookTripRequest(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return (
+    normalized.includes('book this trip') ||
+    normalized.includes('book the trip') ||
+    normalized.includes('proceed to checkout') ||
+    normalized.includes('checkout')
+  );
+}
+
+function isSavedPaymentConfirmation(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return (
+    (normalized.includes('saved visa') || normalized.includes('visa ending') || normalized.includes('4242')) &&
+    normalized.includes('confirm')
+  );
+}
+
+function hasCardType(message: ScriptMessage | undefined, type: CardData['type']): boolean {
+  return message?.card?.type === type;
+}
+
+function hasChoiceVariant(message: ScriptMessage, variant: ChoiceGroupCardData['variant']): boolean {
+  return message.card?.type === 'choice_group' && message.card.variant === variant;
+}
+
+function july4GuardrailMessage(
+  userText: string,
+  scenario: ScenarioId,
+  liveMessage?: ScriptMessage,
+): ScriptMessage | null {
+  if (scenario !== 'july4') {
+    return null;
+  }
+
+  if (isSunsetSailingSelection(userText) && !hasCardType(liveMessage, 'cost_summary')) {
+    return packageSummaryMessage ? { ...packageSummaryMessage, delay: 0 } : null;
+  }
+
+  if (isBookTripRequest(userText) && !hasCardType(liveMessage, 'payment_panel')) {
+    return paymentPanelMessage ? { ...paymentPanelMessage, delay: 0 } : null;
+  }
+
+  if (isSavedPaymentConfirmation(userText) && !hasCardType(liveMessage, 'confirmation')) {
+    return confirmationMessage ? { ...confirmationMessage, delay: 0 } : null;
+  }
+
+  return null;
 }
 
 function isDestinationRecommendationText(text: string): boolean {
@@ -105,6 +170,58 @@ function isExperienceUpsellText(text: string): boolean {
 function polishLiveMessageText(message: ScriptMessage, scenario: ScenarioId): ScriptMessage {
   if (scenario !== 'july4' || message.role !== 'agent' || !message.text) {
     return message;
+  }
+
+  if (hasChoiceVariant(message, 'destination')) {
+    return {
+      ...message,
+      text:
+        'Wonderful — I found three beach destinations for two from New York City that fit your July 4th budget.\n\n' +
+        "- **Martha's Vineyard, MA:** Classic New England coastline, charming villages, seafood shacks, and calm beaches. Easy from NYC and ideal for a relaxed long weekend.\n" +
+        '- **Outer Banks, NC:** Unspoiled beaches, wild horses, and a laid-back coastal vibe with strong value and quieter beaches.\n' +
+        '- **Kennebunkport, ME:** Rugged Maine coastline, lobster rolls, tidal pools, and cooler summer temperatures.\n\n' +
+        'Which one sounds most appealing?',
+    };
+  }
+
+  if (hasChoiceVariant(message, 'hotel')) {
+    return {
+      ...message,
+      text:
+        "Excellent choice — **Martha's Vineyard** is beautiful for the holiday weekend.\n\n" +
+        'Here are a few hotel options for **July 3-6** that keep the overall budget in mind.',
+    };
+  }
+
+  if (hasChoiceVariant(message, 'flight')) {
+    return {
+      ...message,
+      text:
+        '**Summercamp Hotel** is a great fit for a fun, stylish stay.\n\n' +
+        "For flights from New York City to Martha's Vineyard, I found two good options:\n\n" +
+        '- **JetBlue nonstop:** JFK → MVY, under an hour each way, **$636 total for 2**.\n' +
+        '- **Cape Air via Boston:** JFK → BOS → MVY, **$496 total for 2**. It is a bit cheaper, but adds the Boston connection.\n\n' +
+        'Which flight option works best?',
+    };
+  }
+
+  if (hasChoiceVariant(message, 'experience')) {
+    return {
+      ...message,
+      text:
+        "**You're currently $629 under budget!** **Would you like to add an experience to your trip?** You can add one memorable holiday experience and still stay comfortably within your $2,000 plan.\n\n" +
+        '- **Sunset Sailing Cruise:** Watch the July 4 fireworks from Edgartown Harbor, **$190 total for 2**.\n' +
+        '- **Island Bike & Wine Tour:** A relaxed July 5 vineyard ride with tastings, **$150 total for 2**.\n\n' +
+        'Which add-on would make the trip feel complete?',
+    };
+  }
+
+  if (hasCardType(message, 'confirmation') && confirmationMessage?.text) {
+    return {
+      ...message,
+      text: confirmationMessage.text,
+      siteAction: message.siteAction ?? confirmationMessage.siteAction,
+    };
   }
 
   if (isDestinationRecommendationText(message.text)) {
@@ -205,8 +322,20 @@ export function getLiveFastPathMessage(
   };
 }
 
-export function withLiveFallbackCard(message: ScriptMessage, scenario: ScenarioId): ScriptMessage {
+export function getLiveErrorFallbackMessage(userText: string, scenario: ScenarioId): ScriptMessage | null {
+  return july4GuardrailMessage(userText, scenario);
+}
+
+export function withLiveFallbackCard(
+  message: ScriptMessage,
+  scenario: ScenarioId,
+  userText = '',
+): ScriptMessage {
   const polishedMessage = normalizeLiveCard(polishLiveMessageText(message, scenario), scenario);
+  const guardedMessage = july4GuardrailMessage(userText, scenario, polishedMessage);
+  if (guardedMessage) {
+    return guardedMessage;
+  }
 
   if (scenario !== 'july4' || polishedMessage.role !== 'agent' || polishedMessage.card) {
     return polishedMessage;

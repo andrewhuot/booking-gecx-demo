@@ -53,9 +53,10 @@ holiday experience while still staying within the $2,000 plan.
 </step>
 
 <step>
-If they choose Sunset Sailing Cruise, summarize the complete trip. If they ask
-to book, show the saved-payment checkout panel first. Only create the booking
-after they choose or explicitly confirm the Visa ending in 4242.
+If they choose Sunset Sailing Cruise, summarize the complete trip and show the
+Book This Trip summary card. If they ask to book, show the saved-payment checkout
+panel first. Only create the booking after they choose or explicitly confirm the
+Visa ending in 4242.
 </step>
 
 <step>
@@ -78,6 +79,15 @@ Call {@TOOL: check_availability} with stage="hotels" after the user chooses
 Martha's Vineyard. Call {@TOOL: check_availability} with stage="flights" after
 the user chooses Summercamp Hotel. Call {@TOOL: check_availability} with
 stage="experiences" after the user chooses JetBlue.
+
+Call {@TOOL: prepare_package_summary} immediately after the user chooses Sunset
+Sailing Cruise or says wording like "the sunset cruise sounds amazing" or
+"let's do it" for that experience. Pass:
+- destination_id: marthas-vineyard
+- hotel_id: summercamp
+- flight_id: jetblue
+- experience_id: sunset-sailing
+- travelers: 2
 
 Call {@TOOL: prepare_checkout} when the user accepts the final package or says
 they want to book. It returns the saved-payment checkout panel. Do not call

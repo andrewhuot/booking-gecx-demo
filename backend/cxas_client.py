@@ -178,7 +178,10 @@ class CXASClient:
         try:
             from cxas_scrapi import Sessions  # lazy import
 
-            sessions = Sessions(app_name=self.app_name)
+            sessions = Sessions(
+                app_name=self.app_name,
+                deployment_id=self._settings.cxas_deployment_id or None,
+            )
             session_id = sessions.create_session_id()
             if isinstance(session_id, str) and session_id:
                 return session_id
@@ -213,11 +216,15 @@ class CXASClient:
         try:
             sessions = Sessions(
                 app_name=self.app_name,
+                deployment_id=self._settings.cxas_deployment_id or None,
                 rate_limiter=self._get_rate_limiter(),
             )
         except TypeError:
             # Older SDKs without a rate_limiter kwarg: construct without it.
-            sessions = Sessions(app_name=self.app_name)
+            sessions = Sessions(
+                app_name=self.app_name,
+                deployment_id=self._settings.cxas_deployment_id or None,
+            )
         except CXASUnavailable:
             # e.g. CXAS_APP_NAME unset — surface its clear message verbatim.
             raise
@@ -231,6 +238,7 @@ class CXASClient:
                 response = sessions.run(
                     session_id=session_id,
                     text=text,
+                    deployment_id=self._settings.cxas_deployment_id or None,
                     modality=Modality.TEXT,
                 )
                 structured = sessions.get_structured_response(response)

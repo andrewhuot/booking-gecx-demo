@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDemoStore } from '../../store/demoStore';
 import { useCXASAgent } from '../../hooks/useCXASAgent';
-import { getLiveFastPathMessage, withLiveFallbackCard } from '../../lib/liveFallbackCards';
+import {
+  getLiveErrorFallbackMessage,
+  getLiveFastPathMessage,
+  withLiveFallbackCard,
+} from '../../lib/liveFallbackCards';
 import { MessageList } from './MessageList';
 import { QuickReplyChips } from './QuickReplyChips';
 import { CHAT_SUBMIT_EVENT, type ChatSubmitEventDetail } from './chatSubmitEvent';
@@ -53,14 +57,17 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
       }
 
       const result = await sendMessage(trimmed, 'chat');
-      pushAgentMessage(withLiveFallbackCard(result, scenario));
+      pushAgentMessage(withLiveFallbackCard(result, scenario, trimmed));
     } catch {
-      pushAgentMessage({
-        role: 'agent',
-        text: 'Sorry, I had trouble connecting. (Live mode requires the backend.)',
-        delay: 0,
-        capability: 'Live',
-      });
+      const fallbackMessage = getLiveErrorFallbackMessage(trimmed, scenario);
+      pushAgentMessage(
+        fallbackMessage ?? {
+          role: 'agent',
+          text: 'Sorry, I had trouble connecting. (Live mode requires the backend.)',
+          delay: 0,
+          capability: 'Live',
+        },
+      );
     } finally {
       setTyping(false);
     }

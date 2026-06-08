@@ -7,11 +7,35 @@ agent-text de-duplication that the live bridge applies to CES responses.
 """
 from __future__ import annotations
 
+import sys
+from types import ModuleType, SimpleNamespace
+
+from backend.config import Settings
+from backend.cxas_client import CXASClient
 from backend.cxas_client import (
     _dedupe_agent_text,
     _humanize_error,
     _is_rate_limit,
 )
+
+
+def _settings(**overrides):
+    """Build a Settings object with project fields filled for client tests."""
+    values = {
+        "gcp_project_id": "demo-project",
+        "gcp_project_number": "42",
+        "gcp_location": "us",
+        "cxas_app_name": "projects/42/locations/us/apps/app-1",
+        "cxas_agent_id": "",
+        "cxas_deployment_id": "live-demo",
+        "demo_mode": "live",
+        "cxas_requests_per_minute": 30.0,
+        "cxas_app_display_name": "Booking.com Concierge Demo",
+        "cxas_app_id": "booking-concierge",
+        "cxas_model": "gemini-2.5-flash",
+    }
+    values.update(overrides)
+    return Settings(**values)
 
 
 # --------------------------------------------------------------------------- #
@@ -76,3 +100,66 @@ def test_dedupe_handles_empty_and_whitespace():
     assert _dedupe_agent_text("") == ""
     # Two identical multi-word halves.
     assert _dedupe_agent_text("hello world hello world") == "hello world"
+
+
+def test_start_session_passes_configured_deployment_id(monkeypatch):
+    calls = []
+
+    class FakeSessions:
+        def __init__(self, **kwargs):
+            calls.append(kwargs)
+
+        def create_session_id(self):
+            return "session-123"
+
+    fake_cxas = ModuleType("cxas_scrapi")
+    fake_cxas.Sessions = FakeSessions
+    monkeypatch.setitem(sys.modules, "cxas_scrapi", fake_cxas)
+
+    session_id = CXASClient(config=_settings()).start_session()
+
+    assert session_id == "session-123"
+    assert calls == [
+        {
+            "app_name": "projects/42/locations/us/apps/app-1",
+            "deployment_id": "live-demo",
+        }
+    ]
+
+
+def test_run_turn_passes_configured_deployment_id(monkeypatch):
+    calls = []
+
+    class FakeSessions:
+        def __init__(self, **kwargs):
+            calls.append({"init": kwargs})
+
+        def run(self, **kwargs):
+            calls.append({"run": kwargs})
+            return object()
+
+        def get_structured_response(self, response):
+            return {"agent_text": "Ready."}
+
+    fake_cxas = ModuleType("cxas_scrapi")
+    fake_cxas.Sessions = FakeSessions
+    fake_sessions_module = ModuleType("cxas_scrapi.core.sessions")
+    fake_sessions_module.Modality = SimpleNamespace(TEXT="text")
+    monkeypatch.setitem(sys.modules, "cxas_scrapi", fake_cxas)
+    monkeypatch.setitem(sys.modules, "cxas_scrapi.core.sessions", fake_sessions_module)
+
+    result = CXASClient(config=_settings()).run_turn(
+        session_id="session-123",
+        text="Hello",
+        channel="chat",
+    )
+
+    assert result == {"agent_text": "Ready."}
+    assert calls[0] == {
+        "init": {
+            "app_name": "projects/42/locations/us/apps/app-1",
+            "deployment_id": "live-demo",
+            "rate_limiter": None,
+        }
+    }
+    assert calls[1]["run"]["deployment_id"] == "live-demo"

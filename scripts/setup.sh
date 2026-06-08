@@ -70,7 +70,8 @@ cat <<'EOF'
   1. (Optional) Provision the live CXAS agent — needs ADC credentials
      (gcloud auth application-default login) and the CES API enabled. First set
      GCP_PROJECT_ID in .env (copy .env.example), then run — it lints the app tree,
-     pushes it, and writes CXAS_APP_NAME back into .env:
+     pushes it, creates/updates the API deployment, and writes CXAS_APP_NAME plus
+     CXAS_DEPLOYMENT_ID back into .env:
        backend/.venv/bin/python scripts/create_agent.py
      (Targeting your own project? See README - "Point this at your own GCP project".)
 

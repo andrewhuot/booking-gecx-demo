@@ -291,7 +291,9 @@ project or run your own independent copy of the agent.
 
 4. **Manual agent provisioning** (optional). The launcher does this for you when
    you pass `--provision-agent`. To run it yourself, use the command below. It
-   lints the app tree, pushes it, and writes `CXAS_APP_NAME` back into `.env`:
+   lints the app tree, pushes it, creates a fresh app version, creates or updates
+   the `live-demo` API deployment, and writes `CXAS_APP_NAME` plus
+   `CXAS_DEPLOYMENT_ID` back into `.env`:
 
    ```bash
    backend/.venv/bin/python scripts/create_agent.py
@@ -316,8 +318,9 @@ project or run your own independent copy of the agent.
    ./scripts/run_turnkey_demo.sh --mode live --skip-install
    ```
 
-That's it — the backend reads `CXAS_APP_NAME` from `.env`, and `/google/live`
-now talks to *your* agent through the same desktop chat surface.
+That's it — the backend reads `CXAS_APP_NAME` and `CXAS_DEPLOYMENT_ID` from
+`.env`, and `/google/live` now talks to *your deployed agent* through the same
+desktop chat surface.
 
 ### Configuration reference
 
@@ -327,6 +330,7 @@ now talks to *your* agent through the same desktop chat surface.
 | `GCP_PROJECT_NUMBER` | backend | Project number (appears in the app resource path). |
 | `GCP_LOCATION` | script + backend | CES region. Use `us`. |
 | `CXAS_APP_NAME` | backend | Deployed app resource path. **Written by `create_agent.py`** — leave blank initially. |
+| `CXAS_DEPLOYMENT_ID` | backend | API deployment id used by live sessions, usually `live-demo`. **Written by `create_agent.py`**. |
 | `CXAS_APP_DISPLAY_NAME` / `CXAS_APP_ID` / `CXAS_MODEL` | script | Name / id / model for the app `create_agent.py` provisions (CLI-overridable). |
 | `CXAS_REQUESTS_PER_MINUTE` | backend | Client-side pacing for the CES token quota (default 30 for a fast project; lower to 12 or 6 if you see 429s). |
 | `DEMO_MODE` | backend | `scripted` (default) or `live`. |

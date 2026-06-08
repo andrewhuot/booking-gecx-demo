@@ -1,0 +1,9 @@
+{
+  "name": "d3ca4b54-15e1-45cb-a2ac-c27cb9539a19",
+  "displayName": "prepare_package_summary",
+  "pythonFunction": {
+    "name": "prepare_package_summary",
+    "pythonCode": "tools/prepare_package_summary/python_function/python_code.py",
+    "description": "Return the July 4 complete-trip cost summary after the guest chooses the Sunset Sailing Cruise and before checkout. Use this to show the Book This Trip card."
+  }
+}

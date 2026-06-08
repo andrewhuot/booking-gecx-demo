@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { ChoiceGroupCardData, ScriptMessage } from './types';
-import { getLiveFastPathMessage, withLiveFallbackCard } from './liveFallbackCards';
+import {
+  getLiveErrorFallbackMessage,
+  getLiveFastPathMessage,
+  withLiveFallbackCard,
+} from './liveFallbackCards';
 
 function liveAgentMessage(text: string): ScriptMessage {
   return {
@@ -49,6 +53,30 @@ describe('withLiveFallbackCard', () => {
     expect(message.text).not.toContain("I've found a few hotels for you there");
   });
 
+  it('formats a generic live destination intro when the destination card is present', () => {
+    const destinationCard: ChoiceGroupCardData = {
+      type: 'choice_group',
+      variant: 'destination',
+      title: 'July 4th beach destinations',
+      layout: 'cards',
+      options: [
+        { id: 'marthas-vineyard', title: "Martha's Vineyard, MA", replyText: "Let's go with the Vineyard!" },
+      ],
+    };
+
+    const message = withLiveFallbackCard(
+      {
+        ...liveAgentMessage('Here are some July 4th beach destinations:'),
+        card: destinationCard,
+      },
+      'july4',
+    );
+
+    expect(message.text).toContain("- **Martha's Vineyard, MA:**");
+    expect(message.text).toContain('- **Outer Banks, NC:**');
+    expect(message.card).toBe(destinationCard);
+  });
+
   it('formats the live flight options as bold logical bullets', () => {
     const message = withLiveFallbackCard(
       liveAgentMessage(
@@ -65,6 +93,39 @@ describe('withLiveFallbackCard', () => {
     expect(message.text).toContain('**$636 total for 2**');
     expect(message.text).toContain('**$496 total for 2**');
     expect(message.text).not.toContain("There's a nonstop JetBlue flight");
+  });
+
+  it('formats flight copy from the flight card even when live text repeats the hotel intro', () => {
+    const flightCard: ChoiceGroupCardData = {
+      type: 'choice_group',
+      variant: 'flight',
+      title: "NYC to Martha's Vineyard flights",
+      layout: 'cards',
+      options: [
+        {
+          id: 'jetblue',
+          title: 'JetBlue',
+          subtitle: 'JFK → MVY · Nonstop',
+          replyText: 'JetBlue for sure',
+        },
+      ],
+    };
+
+    const message = withLiveFallbackCard(
+      {
+        ...liveAgentMessage(
+          "Excellent choice — Martha's Vineyard is beautiful for the holiday weekend.\n\n" +
+            'Here are a few hotel options for July 3-6 that keep the overall budget in mind.',
+        ),
+        card: flightCard,
+      },
+      'july4',
+    );
+
+    expect(message.text).toContain('- **JetBlue nonstop:** JFK → MVY');
+    expect(message.text).toContain('- **Cape Air via Boston:** JFK → BOS → MVY');
+    expect(message.text).not.toContain('Here are a few hotel options');
+    expect(message.card).toBe(flightCard);
   });
 
   it('formats the live experience upsell around the remaining budget value proposition', () => {
@@ -214,6 +275,89 @@ describe('withLiveFallbackCard', () => {
     expect(normalizedCard.options[0].subtitle).toBe('JFK → BOS → MVY · 1 stop');
     expect(normalizedCard.options[0].description).toContain('Boston');
     expect(normalizedCard.options[0].description).toContain('Cape Air hop');
+  });
+
+  it('recovers the sunset-cruise selection to the package summary when live drifts backward', () => {
+    const message = withLiveFallbackCard(
+      liveAgentMessage(
+        "Excellent choice — Martha's Vineyard is beautiful for the holiday weekend.\n\n" +
+          'Here are a few hotel options for July 3-6 that keep the overall budget in mind.',
+      ),
+      'july4',
+      'The sunset cruise on July 4th sounds amazing, let’s do it',
+    );
+
+    expect(message.card?.type).toBe('cost_summary');
+    expect(message.text).toContain('complete trip');
+    if (message.card?.type === 'cost_summary') {
+      expect(message.card.total).toBe('$1,561');
+      expect(message.card.replyText).toBe('Book This Trip');
+    }
+  });
+
+  it('recovers the book request to the saved-payment checkout panel', () => {
+    const message = withLiveFallbackCard(
+      liveAgentMessage('Sure, I can help you keep planning.'),
+      'july4',
+      'Book This Trip',
+    );
+
+    expect(message.card?.type).toBe('payment_panel');
+    expect(message.text).toContain('confirm the booking');
+    if (message.card?.type === 'payment_panel') {
+      expect(message.card.options[0].title).toBe('Visa ending in 4242');
+    }
+  });
+
+  it('recovers saved Visa confirmation to the final confirmation card and page action', () => {
+    const message = withLiveFallbackCard(
+      liveAgentMessage('I can prepare that for you.'),
+      'july4',
+      'Use my saved Visa and confirm',
+    );
+
+    expect(message.card?.type).toBe('confirmation');
+    expect(message.siteAction?.type).toBe('navigate');
+    expect(message.siteAction?.to).toBe('confirmation');
+    if (message.card?.type === 'confirmation') {
+      expect(message.card.confirmationNumber).toBe('BK-4JUL-29571');
+      expect(message.card.itinerarySections?.map((section) => section.title)).toEqual([
+        'Hotel',
+        'Flights',
+        'Activity',
+      ]);
+    }
+  });
+
+  it('polishes live confirmation text to include the checkmark booking language', () => {
+    const message = withLiveFallbackCard(
+      {
+        ...liveAgentMessage("Wonderful! Your trip is now booked.\n\nHere's your confirmation:"),
+        card: {
+          type: 'confirmation',
+          confirmationNumber: 'BK-4JUL-29571',
+          property: 'Summercamp Hotel',
+          dates: 'Jul 3 - Jul 6, 2026',
+          room: 'Two guests · 3 nights',
+          nights: 3,
+          total: '$1,561',
+          status: 'Confirmed',
+        },
+      },
+      'july4',
+      'Use my saved Visa and confirm',
+    );
+
+    expect(message.text).toContain('✅ A confirmation has been sent');
+    expect(message.text).toContain('BK-4JUL-29571');
+    expect(message.card?.type).toBe('confirmation');
+    expect(message.siteAction?.to).toBe('confirmation');
+  });
+
+  it('provides the same known-turn fallback when a live backend call fails', () => {
+    const message = getLiveErrorFallbackMessage('Book This Trip', 'july4');
+
+    expect(message?.card?.type).toBe('payment_panel');
   });
 
   it('does not add July 4 chips to other scenarios', () => {
