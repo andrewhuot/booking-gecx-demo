@@ -35,6 +35,8 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
+import zipfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -44,7 +46,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from backend.config import settings  # noqa: E402  (after sys.path setup)
 
-APP_DIR = REPO_ROOT / "agent" / "cxas_app" / "booking-concierge"
+DEFAULT_APP_DIR = REPO_ROOT / "agent" / "cxas_app" / "booking-concierge"
 CONFIG_PATH = REPO_ROOT / "agent" / "agent_config.json"
 ENV_PATH = REPO_ROOT / ".env"
 DEFAULT_DEPLOYMENT_ID = "live-demo"
@@ -90,11 +92,66 @@ def _display_path(path: Path) -> Path:
         return path
 
 
+def _find_cxas_app_dir(root: Path) -> Path:
+    """Find the CXAS app directory under ``root`` by locating its app.json."""
+    resolved = root.expanduser().resolve()
+    if not resolved.exists():
+        raise ValueError(f"App source does not exist: {resolved}")
+    if (resolved / "app.json").is_file():
+        return resolved
+
+    candidates = sorted({path.parent for path in resolved.rglob("app.json")})
+    if len(candidates) == 1:
+        return candidates[0]
+
+    preferred = [candidate for candidate in candidates if candidate.name == "booking-concierge"]
+    if len(preferred) == 1:
+        return preferred[0]
+
+    if not candidates:
+        raise ValueError(
+            f"No CXAS app found under {resolved}. Expected app.json at the app root.",
+        )
+
+    formatted = ", ".join(str(_display_path(candidate)) for candidate in candidates[:5])
+    raise ValueError(
+        f"Found multiple CXAS app candidates under {resolved}: {formatted}. "
+        "Pass --app-dir to the exact app directory.",
+    )
+
+
+def _is_within(parent: Path, child: Path) -> bool:
+    """Return whether ``child`` is safely contained inside ``parent``."""
+    return child == parent or parent in child.parents
+
+
+def _extract_app_zip(zip_path: Path, extract_root: Path) -> Path:
+    """Extract a CXAS app zip safely and return the resolved app directory."""
+    resolved_zip = zip_path.expanduser().resolve()
+    if not resolved_zip.is_file():
+        raise ValueError(f"Agent zip does not exist: {resolved_zip}")
+    if not zipfile.is_zipfile(resolved_zip):
+        raise ValueError(f"Agent zip is not a valid zip file: {resolved_zip}")
+
+    resolved_root = extract_root.expanduser().resolve()
+    resolved_root.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(resolved_zip) as archive:
+        for member in archive.infolist():
+            if member.filename.startswith("/") or member.filename.strip() == "":
+                raise ValueError(f"Agent zip contains unsafe path: {member.filename}")
+            target = (resolved_root / member.filename).resolve()
+            if not _is_within(resolved_root, target):
+                raise ValueError(f"Agent zip contains unsafe path: {member.filename}")
+        archive.extractall(resolved_root)
+
+    return _find_cxas_app_dir(resolved_root)
+
+
 def _write_config(
     *, project_id: str, location: str, display_name: str, app_id: str, model: str,
     app_name: str | None, deployment_id: str | None = None,
     deployment_name: str | None = None, version_name: str | None = None,
-    provisioned: bool, note: str,
+    app_dir: Path, provisioned: bool, note: str,
 ) -> None:
     CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
     CONFIG_PATH.write_text(json.dumps({
@@ -108,7 +165,7 @@ def _write_config(
         "deployment_id": deployment_id,
         "deployment_name": deployment_name,
         "version_name": version_name,
-        "app_dir": str(APP_DIR.relative_to(REPO_ROOT)),
+        "app_dir": str(_display_path(app_dir)),
         "model": model,
     }, indent=2) + "\n", encoding="utf-8")
     print(f"  -> wrote {_display_path(CONFIG_PATH)}")
@@ -194,6 +251,11 @@ def _parse_args() -> argparse.Namespace:
                    help="Agent model (default: $CXAS_MODEL). Recorded in agent_config.json.")
     p.add_argument("--deployment-id", default=settings.cxas_deployment_id or DEFAULT_DEPLOYMENT_ID,
                    help=f"API deployment id to create/update (default: {DEFAULT_DEPLOYMENT_ID}).")
+    source = p.add_mutually_exclusive_group()
+    source.add_argument("--app-dir",
+                        help="Path to a CXAS app directory. Defaults to agent/cxas_app/booking-concierge.")
+    source.add_argument("--app-zip",
+                        help="Path to an exported CXAS app zip. The zip may contain app.json at the root or in one nested app folder.")
     p.add_argument("--dry-run", action="store_true",
                    help="Print the resolved config and the commands that would run, then exit.")
     return p.parse_args()
@@ -201,6 +263,21 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = _parse_args()
+    temp_dir: tempfile.TemporaryDirectory[str] | None = None
+    try:
+        if args.app_zip:
+            temp_dir = tempfile.TemporaryDirectory(prefix="booking-cxas-app-")
+            app_dir = _extract_app_zip(Path(args.app_zip), Path(temp_dir.name))
+        elif args.app_dir:
+            app_dir = _find_cxas_app_dir(Path(args.app_dir))
+        else:
+            app_dir = _find_cxas_app_dir(DEFAULT_APP_DIR)
+    except ValueError as exc:
+        print(f"\n  ! {exc}")
+        if temp_dir is not None:
+            temp_dir.cleanup()
+        return 2
+
     project_id = (args.project_id or "").strip()
     location = (args.location or "us").strip()
     display_name = args.display_name
@@ -209,7 +286,9 @@ def main() -> int:
     deployment_id = args.deployment_id
 
     print("Provisioning the Booking.com Concierge on CXAS")
-    print(f"  app_dir      = {APP_DIR.relative_to(REPO_ROOT)}")
+    print(f"  app_dir      = {_display_path(app_dir)}")
+    if args.app_zip:
+        print(f"  app_zip      = {Path(args.app_zip).expanduser()}")
     print(f"  project_id   = {project_id or '(unset)'}")
     print(f"  location     = {location}")
     print(f"  display_name = {display_name}")
@@ -227,8 +306,8 @@ def main() -> int:
 
     if args.dry_run:
         print("\n[dry-run] Would run:")
-        print(f"  {CXAS_LABEL} lint --app-dir {APP_DIR}")
-        print(f"  {CXAS_LABEL} push --app-dir {APP_DIR} "
+        print(f"  {CXAS_LABEL} lint --app-dir {app_dir}")
+        print(f"  {CXAS_LABEL} push --app-dir {app_dir} "
               f"(--to <existing> | --display-name {display_name!r}) "
               f"--project-id {project_id} --location {location}")
         print("  create a fresh app version, create/update an API deployment,")
@@ -236,7 +315,7 @@ def main() -> int:
         return 0
 
     # 1. Lint.
-    lint = _run([*CXAS, "lint", "--app-dir", str(APP_DIR)])
+    lint = _run([*CXAS, "lint", "--app-dir", str(app_dir)])
     print(lint.stdout)
     if lint.returncode != 0:
         print(lint.stderr)
@@ -244,17 +323,17 @@ def main() -> int:
         _write_config(project_id=project_id, location=location, display_name=display_name,
                       app_id=app_id, model=model, app_name=None, provisioned=False,
                       deployment_id=deployment_id, deployment_name=None, version_name=None,
-                      note="Lint failed; not pushed.")
+                      app_dir=app_dir, note="Lint failed; not pushed.")
         return 1
 
     # 2. Push (overwrite if an app with this display name already exists, else create).
     existing = _find_existing_app_name(project_id, location, display_name)
     if existing:
         print(f"  app exists, overwriting: {existing}")
-        push = _run([*CXAS, "push", "--app-dir", str(APP_DIR), "--to", existing,
+        push = _run([*CXAS, "push", "--app-dir", str(app_dir), "--to", existing,
                      "--project-id", project_id, "--location", location])
     else:
-        push = _run([*CXAS, "push", "--app-dir", str(APP_DIR),
+        push = _run([*CXAS, "push", "--app-dir", str(app_dir),
                      "--display-name", display_name,
                      "--project-id", project_id, "--location", location])
     print(push.stdout)
@@ -263,7 +342,7 @@ def main() -> int:
         _write_config(project_id=project_id, location=location, display_name=display_name,
                       app_id=app_id, model=model, app_name=existing, provisioned=False,
                       deployment_id=deployment_id, deployment_name=None, version_name=None,
-                      note="Push failed.")
+                      app_dir=app_dir, note="Push failed.")
         return 1
 
     app_name = _extract_app_name(push.stdout) or _extract_app_name(push.stderr) \
@@ -273,7 +352,7 @@ def main() -> int:
         _write_config(project_id=project_id, location=location, display_name=display_name,
                       app_id=app_id, model=model, app_name=None, provisioned=False,
                       deployment_id=deployment_id, deployment_name=None, version_name=None,
-                      note="Pushed but app name not captured.")
+                      app_dir=app_dir, note="Pushed but app name not captured.")
         return 1
 
     print("  creating deployable app version")
@@ -287,13 +366,15 @@ def main() -> int:
     _write_config(project_id=project_id, location=location, display_name=display_name,
                   app_id=app_id, model=model, app_name=app_name,
                   deployment_id=deployment_id, deployment_name=deployment_name,
-                  version_name=version_name, provisioned=True,
+                  version_name=version_name, app_dir=app_dir, provisioned=True,
                   note="Provisioned via cxas push.")
     _upsert_env(app_name, deployment_id)
     print("\nDeployment complete.")
     print(f"  CXAS_APP_NAME={app_name}")
     print(f"  CXAS_DEPLOYMENT_ID={deployment_id}")
     print("  Smoke test:  backend/.venv/bin/python scripts/test_agent.py")
+    if temp_dir is not None:
+        temp_dir.cleanup()
     return 0
 
 

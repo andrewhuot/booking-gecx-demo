@@ -53,6 +53,15 @@ the backend and frontend, and opens the desktop fake Google page at `/google`.
 Click the Booking.com sponsored result to enter the warm-start July 4 desktop
 chat flow. Press Ctrl-C in the launcher terminal to stop both servers.
 
+Moving to a new computer or a new GCP/CXAS project? Use:
+
+```bash
+./scripts/bootstrap_new_project.sh --project-id YOUR_PROJECT_ID
+```
+
+That wrapper runs the live setup path end to end: local dependencies, GCP prep,
+CXAS provisioning, servers, and `/google/live`.
+
 ## How to run the demo
 
 Pick one command. Each one starts on the fake Google Search page. Click the
@@ -70,7 +79,7 @@ message script below.
 
 # First live run on a new GCP project.
 # Prepares GCP, provisions the agent, then opens /google/live.
-./scripts/run_turnkey_demo.sh --mode live --prepare-gcp --provision-agent --project-id YOUR_PROJECT_ID
+./scripts/bootstrap_new_project.sh --project-id YOUR_PROJECT_ID
 ```
 
 Stop the demo with `Ctrl-C` in the launcher terminal.
@@ -82,7 +91,7 @@ Useful launcher variants:
 ./scripts/run_turnkey_demo.sh --mode mock
 
 # Live GECX/CXAS flow; prepares GCP, provisions the agent, and opens /google/live.
-./scripts/run_turnkey_demo.sh --mode live --prepare-gcp --provision-agent --project-id YOUR_PROJECT_ID
+./scripts/bootstrap_new_project.sh --project-id YOUR_PROJECT_ID
 
 # Keep the browser closed and print the URL instead.
 ./scripts/run_turnkey_demo.sh --no-open
@@ -115,8 +124,9 @@ cd frontend && npm run test:run                         # frontend
 
 ## New computer + new GCP project
 
-Use this checklist when you move the repo to another machine and want the live
-demo to use a fresh GCP project.
+Use this when you move the repo to another machine and want the live demo to use
+a fresh GCP project and a fresh CXAS app. Mock mode remains offline and needs no
+GCP setup.
 
 1. Install the basics:
 
@@ -125,31 +135,100 @@ demo to use a fresh GCP project.
    - Node 18+ and npm
    - [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)
 
-2. Sign in to Google Cloud on the new computer:
+2. Copy or clone the repo onto the new computer.
+
+3. Sign in to Google Cloud on the new computer:
 
    ```bash
    gcloud auth login
    gcloud auth application-default login
    ```
 
-3. Run the live-demo setup from the repo root. Replace `YOUR_PROJECT_ID` with
-   the project you want to use:
+4. Run the easiest live setup from the repo root. Replace `YOUR_PROJECT_ID` with
+   the new project you want to use:
 
    ```bash
-   ./scripts/run_turnkey_demo.sh \
-     --mode live \
-     --prepare-gcp \
-     --provision-agent \
-     --project-id YOUR_PROJECT_ID
+   ./scripts/bootstrap_new_project.sh --project-id YOUR_PROJECT_ID
    ```
 
-   This single command installs dependencies, creates `.env`, points gcloud at
-   your project, enables `ces.googleapis.com`, finds the project number,
-   provisions the CXAS app, starts the backend and frontend, and opens:
+   This command installs dependencies, creates `.env`, points gcloud at your
+   project, enables `ces.googleapis.com`, finds the project number, provisions a
+   new CXAS app, creates/updates deployment `live-demo`, starts the backend and
+   frontend, and opens:
    `http://127.0.0.1:3000/google/live`.
 
-4. Demo it. On the Google page, click the Booking.com sponsored result, then use
+5. Demo it. On the Google page, click the Booking.com sponsored result, then use
    the message script below.
+
+### If you want to move the CXAS agent as a zip
+
+On the old computer or in this repo before moving it:
+
+```bash
+./scripts/export_cxas_agent.sh
+```
+
+That writes:
+
+```text
+agent/.exported/booking-concierge-cxas-agent.zip
+```
+
+Copy that zip to the new computer, then run:
+
+```bash
+./scripts/bootstrap_new_project.sh \
+  --project-id YOUR_PROJECT_ID \
+  --agent-zip /path/to/booking-concierge-cxas-agent.zip
+```
+
+The zip may have `app.json` at the root or inside one nested app folder. The
+provisioning script safely extracts it, lints it, pushes it to CXAS, creates a
+new app version, creates/updates deployment `live-demo`, and writes the live
+resource values back into `.env`.
+
+### If you upload/import the zip manually in the CXAS console
+
+You can still run the local demo without the provisioning script. After you
+upload the agent and create an API deployment in CXAS, set these values in
+`.env`:
+
+```ini
+GCP_PROJECT_ID=your-project-id
+GCP_PROJECT_NUMBER=your-project-number
+GCP_LOCATION=us
+CXAS_APP_NAME=projects/<PROJECT_NUMBER>/locations/us/apps/<APP_ID>
+CXAS_DEPLOYMENT_ID=<YOUR_DEPLOYMENT_ID>
+DEMO_MODE=live
+VITE_DEMO_MODE=live
+```
+
+Then start the live demo:
+
+```bash
+./scripts/run_turnkey_demo.sh --mode live --skip-install
+```
+
+To see the CXAS app, open:
+
+```text
+https://ces.cloud.google.com/projects/YOUR_PROJECT_ID/locations/us/apps/APP_ID
+```
+
+The local provisioning script also writes `agent/agent_config.json` with the
+resolved `app_name`, `deployment_name`, and `version_name`. That file is
+project-specific and intentionally gitignored.
+
+### Mock demo on a new computer
+
+No Google setup is needed:
+
+```bash
+./scripts/bootstrap_new_project.sh --mode mock
+```
+
+It opens `http://127.0.0.1:3000/google` and runs the fully offline scripted
+flow.
 
 The repo assumes a faster project and defaults to:
 
@@ -163,16 +242,15 @@ for the quota window to clear, and rerun the launcher.
 To prepare the computer and provision the agent without starting the demo:
 
 ```bash
-./scripts/run_turnkey_demo.sh \
-  --mode live \
-  --prepare-gcp \
-  --provision-agent \
-  --project-id YOUR_PROJECT_ID \
-  --setup-only
+./scripts/bootstrap_new_project.sh --project-id YOUR_PROJECT_ID --setup-only
 ```
 
 If your organization requires an admin to enable APIs, ask them to enable
-`ces.googleapis.com`, then rerun the command without `--prepare-gcp`.
+`ces.googleapis.com`, then rerun the command with:
+
+```bash
+./scripts/bootstrap_new_project.sh --project-id YOUR_PROJECT_ID --no-prepare-gcp
+```
 
 ## Desktop demo script
 
@@ -236,17 +314,13 @@ project or run your own independent copy of the agent.
    gcloud auth application-default login
    ```
 
-2. **Run the turnkey live launcher**. It installs dependencies, writes the GCP
-   values into `.env`, sets the gcloud project/quota project, enables the CES
-   API, derives the project number, provisions the CXAS app, starts both local
-   servers, and opens `/google/live`:
+2. **Run the turnkey live bootstrapper**. It installs dependencies, writes the
+   GCP values into `.env`, sets the gcloud project/quota project, enables the
+   CES API, derives the project number, provisions the CXAS app, starts both
+   local servers, and opens `/google/live`:
 
    ```bash
-   ./scripts/run_turnkey_demo.sh \
-     --mode live \
-     --prepare-gcp \
-     --provision-agent \
-     --project-id "$PROJECT_ID"
+   ./scripts/bootstrap_new_project.sh --project-id "$PROJECT_ID"
    ```
 
    To deploy a separately named copy of the app, add:
@@ -255,13 +329,19 @@ project or run your own independent copy of the agent.
    --display-name "My Concierge" --app-id my-concierge --model gemini-2.5-flash
    ```
 
-   Preview the CXAS provisioning commands without pushing the app or changing
-   GCP service state:
+   To provision from an exported agent zip instead of the repo source, add:
 
    ```bash
-   ./scripts/run_turnkey_demo.sh \
-     --mode live \
+   --agent-zip /path/to/booking-concierge-cxas-agent.zip
+   ```
+
+   Preview the CXAS provisioning commands without pushing the app. This still
+   configures local `.env` values, but it does not push to CXAS:
+
+   ```bash
+   ./scripts/bootstrap_new_project.sh \
      --dry-run-provision \
+     --no-prepare-gcp \
      --project-id "$PROJECT_ID" \
      --setup-only
    ```
@@ -299,12 +379,22 @@ project or run your own independent copy of the agent.
    backend/.venv/bin/python scripts/create_agent.py
    ```
 
-   - Preview without touching the cloud: `scripts/create_agent.py --dry-run`
+   - Preview without touching the cloud:
+     `backend/.venv/bin/python scripts/create_agent.py --dry-run`
    - Override any setting per run instead of editing `.env`:
 
      ```bash
      backend/.venv/bin/python scripts/create_agent.py \
-       --project-id another-project --display-name "Another Concierge" --app-id another-concierge
+       --project-id another-project \
+       --display-name "Another Concierge" \
+       --app-id another-concierge
+     ```
+   - Provision from an exported/downloaded app zip:
+
+     ```bash
+     backend/.venv/bin/python scripts/create_agent.py \
+       --project-id another-project \
+       --app-zip /path/to/booking-concierge-cxas-agent.zip
      ```
 
    Re-running is idempotent: if an app with that display name already exists, it's
@@ -363,6 +453,8 @@ backend/                            FastAPI bridge + config + tests
 frontend/                           React/Vite site, chat/voice/mobile, demo engine
 scripts/setup.sh                    Backend venv + deps + .env bootstrap
 scripts/run_turnkey_demo.sh         One-command desktop demo launcher
+scripts/bootstrap_new_project.sh    Friendly new-computer/new-project wrapper
+scripts/export_cxas_agent.sh        Creates a portable CXAS app zip
 scripts/create_agent.py             Provision/deploy the agent (env-driven, CLI-overridable)
 scripts/test_agent.py               Live smoke test of the golden scenarios
 docs/superpowers/                   Design spec + implementation plan

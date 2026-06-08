@@ -7,11 +7,14 @@ from __future__ import annotations
 import os
 import socket
 import subprocess
+import zipfile
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / "scripts" / "run_turnkey_demo.sh"
+EXPORT_SCRIPT = REPO_ROOT / "scripts" / "export_cxas_agent.sh"
+BOOTSTRAP_SCRIPT = REPO_ROOT / "scripts" / "bootstrap_new_project.sh"
 
 
 def _free_port() -> str:
@@ -49,6 +52,8 @@ def test_turnkey_launcher_help_explains_modes_routes_and_live_provisioning():
     assert "--mode mock|live" in result.stdout
     assert "--provision-agent" in result.stdout
     assert "--prepare-gcp" in result.stdout
+    assert "--agent-zip" in result.stdout
+    assert "--deployment-id" in result.stdout
     assert "/google" in result.stdout
     assert "/google/live" in result.stdout
     assert "VITE_API_URL" in result.stdout
@@ -92,6 +97,58 @@ def test_turnkey_launcher_setup_only_configures_env_without_servers():
             env_path.unlink(missing_ok=True)
         else:
             env_path.write_text(original_env, encoding="utf-8")
+
+
+def test_migration_scripts_are_executable_and_shell_syntax_valid():
+    """The migration helper scripts are executable Bash scripts."""
+    for script in (EXPORT_SCRIPT, BOOTSTRAP_SCRIPT):
+        assert script.exists()
+        assert os.access(script, os.X_OK)
+
+        result = subprocess.run(
+            ["bash", "-n", str(script)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert result.returncode == 0, result.stderr
+
+
+def test_export_cxas_agent_creates_clean_zip(tmp_path):
+    """The export script produces a portable zip with the CXAS app at the root."""
+    output_zip = tmp_path / "booking-concierge-cxas-agent.zip"
+
+    result = subprocess.run(
+        [str(EXPORT_SCRIPT), "--output", str(output_zip)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert output_zip.exists()
+    with zipfile.ZipFile(output_zip) as archive:
+        names = set(archive.namelist())
+    assert "app.json" in names
+    assert "agents/Concierge/Concierge.json" in names
+    assert "tools/search_properties/search_properties.json" in names
+    assert not any("__pycache__" in name for name in names)
+
+
+def test_bootstrap_new_project_help_describes_repo_and_zip_paths():
+    """The new-project wrapper explains both source-tree and zip workflows."""
+    result = subprocess.run(
+        [str(BOOTSTRAP_SCRIPT), "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "--project-id YOUR_PROJECT_ID" in result.stdout
+    assert "--agent-zip" in result.stdout
+    assert "new computer" in result.stdout.lower()
 
 
 def test_turnkey_launcher_prepare_gcp_derives_project_number(tmp_path):

@@ -28,6 +28,9 @@ LOCATION=""
 DISPLAY_NAME=""
 APP_ID=""
 MODEL=""
+DEPLOYMENT_ID=""
+AGENT_APP_DIR=""
+AGENT_ZIP=""
 
 BACKEND_PID=""
 FRONTEND_PID=""
@@ -58,6 +61,9 @@ Options:
   --display-name VALUE      Override CXAS_APP_DISPLAY_NAME for provisioning.
   --app-id VALUE            Override CXAS_APP_ID for provisioning metadata.
   --model VALUE             Override CXAS_MODEL for provisioning metadata.
+  --deployment-id VALUE     Override CXAS_DEPLOYMENT_ID / API deployment id (default live-demo).
+  --agent-app-dir VALUE     Provision from a CXAS app directory instead of the repo default.
+  --agent-zip VALUE         Provision from an exported CXAS app zip instead of the repo default.
   --host VALUE              Bind both servers to this host (default 127.0.0.1).
   --frontend-port VALUE     Frontend port. Defaults to first free: 3000, 3001, 5173.
   --backend-port VALUE      Backend port. Defaults to first free: 8000, 8001, 8002.
@@ -146,6 +152,21 @@ while [[ $# -gt 0 ]]; do
       MODEL="$2"
       shift 2
       ;;
+    --deployment-id)
+      need_value "$1" "${2:-}"
+      DEPLOYMENT_ID="$2"
+      shift 2
+      ;;
+    --agent-app-dir)
+      need_value "$1" "${2:-}"
+      AGENT_APP_DIR="$2"
+      shift 2
+      ;;
+    --agent-zip)
+      need_value "$1" "${2:-}"
+      AGENT_ZIP="$2"
+      shift 2
+      ;;
     --host)
       need_value "$1" "${2:-}"
       HOST="$2"
@@ -193,6 +214,10 @@ case "${MODE}" in
     die "--mode must be mock or live."
     ;;
 esac
+
+if [[ -n "${AGENT_APP_DIR}" && -n "${AGENT_ZIP}" ]]; then
+  die "Use either --agent-app-dir or --agent-zip, not both."
+fi
 
 cd "${REPO_ROOT}"
 
@@ -361,6 +386,7 @@ configure_env() {
   [[ -n "${DISPLAY_NAME}" ]] && set_env_value "CXAS_APP_DISPLAY_NAME" "${DISPLAY_NAME}"
   [[ -n "${APP_ID}" ]] && set_env_value "CXAS_APP_ID" "${APP_ID}"
   [[ -n "${MODEL}" ]] && set_env_value "CXAS_MODEL" "${MODEL}"
+  [[ -n "${DEPLOYMENT_ID}" ]] && set_env_value "CXAS_DEPLOYMENT_ID" "${DEPLOYMENT_ID}"
   return 0
 }
 
@@ -381,6 +407,9 @@ provision_live_agent() {
   [[ -n "${DISPLAY_NAME}" ]] && args+=(--display-name "${DISPLAY_NAME}")
   [[ -n "${APP_ID}" ]] && args+=(--app-id "${APP_ID}")
   [[ -n "${MODEL}" ]] && args+=(--model "${MODEL}")
+  [[ -n "${DEPLOYMENT_ID}" ]] && args+=(--deployment-id "${DEPLOYMENT_ID}")
+  [[ -n "${AGENT_APP_DIR}" ]] && args+=(--app-dir "${AGENT_APP_DIR}")
+  [[ -n "${AGENT_ZIP}" ]] && args+=(--app-zip "${AGENT_ZIP}")
   [[ "${DRY_RUN_PROVISION}" -eq 1 ]] && args+=(--dry-run)
 
   echo "==> provisioning CXAS agent"

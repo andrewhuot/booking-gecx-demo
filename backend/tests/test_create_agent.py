@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import zipfile
 from pathlib import Path
 
 
@@ -34,6 +35,7 @@ def test_write_config_records_deployment_id_and_version(tmp_path, monkeypatch):
         deployment_id="live-demo",
         deployment_name="projects/demo-project/locations/us/apps/app-1/deployments/live-demo",
         version_name="projects/demo-project/locations/us/apps/app-1/versions/version-1",
+        app_dir=module.REPO_ROOT / "agent" / "cxas_app" / "booking-concierge",
         provisioned=True,
         note="Provisioned via cxas push.",
     )
@@ -47,6 +49,48 @@ def test_write_config_records_deployment_id_and_version(tmp_path, monkeypatch):
     assert data["version_name"] == (
         "projects/demo-project/locations/us/apps/app-1/versions/version-1"
     )
+    assert data["app_dir"] == "agent/cxas_app/booking-concierge"
+
+
+def test_find_cxas_app_dir_accepts_nested_export(tmp_path):
+    """A downloaded or exported bundle may contain the app inside one folder."""
+    module = _load_create_agent_module()
+    app_dir = tmp_path / "booking-concierge"
+    app_dir.mkdir()
+    (app_dir / "app.json").write_text("{}", encoding="utf-8")
+    (app_dir / "agents").mkdir()
+
+    assert module._find_cxas_app_dir(tmp_path) == app_dir
+
+
+def test_extract_app_zip_finds_root_app_json(tmp_path):
+    """Zip imports should work when app.json is at the zip root."""
+    module = _load_create_agent_module()
+    zip_path = tmp_path / "booking-concierge.zip"
+    extract_root = tmp_path / "extracted"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.writestr("app.json", "{}")
+        archive.writestr("agents/Concierge/Concierge.json", "{}")
+
+    app_dir = module._extract_app_zip(zip_path, extract_root)
+
+    assert app_dir == extract_root
+    assert (app_dir / "app.json").exists()
+
+
+def test_extract_app_zip_rejects_path_traversal(tmp_path):
+    """Imported zip files must not write outside the extraction directory."""
+    module = _load_create_agent_module()
+    zip_path = tmp_path / "unsafe.zip"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.writestr("../app.json", "{}")
+
+    try:
+        module._extract_app_zip(zip_path, tmp_path / "extracted")
+    except ValueError as exc:
+        assert "unsafe path" in str(exc)
+    else:
+        raise AssertionError("expected unsafe zip path to be rejected")
 
 
 def test_upsert_env_records_app_and_deployment(tmp_path, monkeypatch):

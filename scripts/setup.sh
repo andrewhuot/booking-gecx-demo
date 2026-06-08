@@ -67,21 +67,25 @@ cat <<'EOF'
 
 ==> Setup complete. Next steps:
 
-  1. (Optional) Provision the live CXAS agent — needs ADC credentials
-     (gcloud auth application-default login) and the CES API enabled. First set
-     GCP_PROJECT_ID in .env (copy .env.example), then run — it lints the app tree,
-     pushes it, creates/updates the API deployment, and writes CXAS_APP_NAME plus
-     CXAS_DEPLOYMENT_ID back into .env:
+  1. Easiest live setup on a new computer / new GCP project:
+       gcloud auth login
+       gcloud auth application-default login
+       ./scripts/bootstrap_new_project.sh --project-id YOUR_PROJECT_ID
+
+  2. Manual live agent provisioning — needs ADC credentials and the CES API
+     enabled. First set GCP_PROJECT_ID in .env (copy .env.example), then run.
+     It lints the app tree, pushes it, creates/updates the API deployment, and
+     writes CXAS_APP_NAME plus CXAS_DEPLOYMENT_ID back into .env:
        backend/.venv/bin/python scripts/create_agent.py
      (Targeting your own project? See README - "Point this at your own GCP project".)
 
-  2. Start the backend API:
+  3. Start the backend API:
        backend/.venv/bin/python -m uvicorn backend.api:app --port 8000
 
-  3. Start the frontend (separate terminal):
+  4. Start the frontend (separate terminal):
        cd frontend && npm install && npm run dev
 
-  4. Run the backend unit tests (no network / credentials needed):
+  5. Run the backend unit tests (no network / credentials needed):
        backend/.venv/bin/python -m pytest backend/tests -q
 
 Scripted mode is the default demo path and needs no GCP access at all.

@@ -165,6 +165,66 @@ basic markdown formatting in live agent text.
 - [x] Validation complete.
 - [x] Changes committed and pushed.
 
+## Current Update — New Computer / New CXAS Migration
+
+### Goal
+Make it straightforward to move both mock and live demos to a new computer and
+point live mode at a completely new GCP project plus a new CXAS app instance,
+including an optional CXAS agent zip workflow.
+
+### Design
+- Keep `scripts/run_turnkey_demo.sh` as the canonical launcher so there is one
+  source of truth for ports, mode routing, provisioning, and server startup.
+- Add a dedicated migration wrapper for the common "new machine, new project"
+  path. It should default to live-mode setup with `--prepare-gcp` and
+  `--provision-agent`, while still exposing mock/demo-only and setup-only
+  variants.
+- Add portable agent-source support to `scripts/create_agent.py` so it can
+  provision from the repo app tree, a local app directory, or an exported zip.
+- Add an export script that creates a clean CXAS app zip from the versioned app
+  tree for people who want to move/download/upload a bundle.
+- Document the exact commands for repo-based setup, zip-based setup, and how to
+  view the resulting CXAS app/deployment.
+
+### Relevant Files
+- `scripts/create_agent.py` - app source resolution and zip import support.
+- `scripts/run_turnkey_demo.sh` - pass-through flags for agent directory/zip and
+  deployment id.
+- `scripts/export_cxas_agent.sh` - create a portable agent zip.
+- `scripts/bootstrap_new_project.sh` - new-computer/new-project wrapper.
+- `README.md` - approachable runbook for mock and live migration.
+- `.env.example` - comments that match the new flow.
+- `backend/tests/test_create_agent.py` and `backend/tests/test_turnkey_launcher.py`
+  - regression coverage for source resolution and launcher flags.
+
+### Constraints
+- Do not commit `.env`, `agent/agent_config.json`, generated zips, or secrets.
+- Keep mock mode fully offline and unchanged.
+- Keep live provisioning opt-in because it changes local gcloud state and the
+  target GCP project.
+- Avoid creating a second independent server launcher.
+
+### Acceptance Criteria
+- A user can run one documented command on a new computer to install deps,
+  prepare GCP, provision the CXAS app, and open `/google/live`.
+- A user can export the agent zip from this repo and use that zip as the source
+  for provisioning on another computer/project.
+- `scripts/create_agent.py --dry-run --app-zip ... --project-id ...` resolves
+  the app source and prints the expected provisioning commands without network
+  calls.
+- README contains a short, friendly migration section with repo-source and zip
+  options.
+- Tests cover the new app source resolution and shell script surfaces.
+
+### Progress
+- [x] Current launcher/provisioning/docs inspected.
+- [x] Failing tests written.
+- [x] Agent zip/source support implemented.
+- [x] Bootstrap/export scripts implemented.
+- [x] README and `.env.example` updated.
+- [x] Validation complete.
+- [ ] Changes committed and pushed.
+
 ## Decision Log
 - 2026-06-04 00:00 — Use path-based mode selection because the request asked for a subtle toggle and the existing UI already has presenter controls for visible mode switching.
 - 2026-06-04 00:00 — Keep Part 1 on the desktop chat channel and leave the existing voice channel untouched because the script explicitly says Part 2 will be handled separately.
