@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDemoStore } from '../../store/demoStore';
+import type { ItinerarySectionData } from '../../lib/types';
 
 function DetailRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
@@ -13,6 +14,21 @@ function DetailRow({ label, value, accent }: { label: string; value: string; acc
         {value}
       </span>
     </div>
+  );
+}
+
+function ItinerarySection({ section }: { section: ItinerarySectionData }) {
+  return (
+    <section className="border-b border-bc-gray-200 py-4 last:border-b-0">
+      <h2 className="text-xs font-bold uppercase tracking-wide text-bc-gray-500">
+        {section.title}
+      </h2>
+      <div className="mt-1">
+        {section.rows.map((row) => (
+          <DetailRow key={`${section.title}-${row.label}`} label={row.label} value={row.value} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -65,9 +81,19 @@ export function Confirmation() {
 
             {/* Details */}
             <div className="mt-5">
-              <DetailRow label="Property" value={booking.property} />
-              <DetailRow label="Dates" value={booking.dates} />
-              <DetailRow label="Room" value={booking.room} />
+              {booking.itinerarySections?.length ? (
+                <div className="border-y border-bc-gray-200">
+                  {booking.itinerarySections.map((section) => (
+                    <ItinerarySection key={section.title} section={section} />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <DetailRow label="Property" value={booking.property} />
+                  <DetailRow label="Dates" value={booking.dates} />
+                  <DetailRow label="Room" value={booking.room} />
+                </>
+              )}
               <DetailRow label="Total" value={booking.total} accent />
             </div>
 

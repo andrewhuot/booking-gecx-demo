@@ -68,7 +68,7 @@ Card shapes (mirroring ``frontend/src/lib/types.ts``):
   - property:            {type, id, name, location, rating, ratingLabel, reviews,
                           price, priceUnit, tags, cta}
   - confirmation:        {type, confirmationNumber, property, dates, room, nights,
-                          total, status}
+                          total, status, itinerarySections?}
   - upsell:              {type, name, description, price, priceContext, cta}
   - confirmation_update: {type, confirmationNumber, addOn, addOnPrice,
                           updatedTotal, status}
@@ -305,6 +305,11 @@ def _build_booking(
     dates = _first_present(card_in.get("dates"), data.get("dates"))
     room = _first_present(card_in.get("room"), data.get("room"), data.get("room_name"))
     total = _format_price(_first_present(card_in.get("total"), data.get("total")))
+    itinerary_sections = _first_present(
+        card_in.get("itinerarySections"),
+        data.get("itinerarySections"),
+        data.get("itinerary_sections"),
+    )
 
     card: dict[str, Any] = {
         "type": "confirmation",
@@ -316,6 +321,8 @@ def _build_booking(
         "total": total,
         "status": _first_present(card_in.get("status"), data.get("status"), default="Confirmed"),
     }
+    if itinerary_sections:
+        card["itinerarySections"] = itinerary_sections
 
     booking_data: dict[str, Any] = {
         "confirmationNumber": confirmation_number,
@@ -324,6 +331,8 @@ def _build_booking(
         "room": room,
         "total": total,
     }
+    if itinerary_sections:
+        booking_data["itinerarySections"] = itinerary_sections
     # Drop keys with no value so the frontend BookingData stays clean.
     booking_data = {k: v for k, v in booking_data.items() if v is not None}
 

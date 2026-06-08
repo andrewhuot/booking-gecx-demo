@@ -260,3 +260,33 @@ def test_july4_hotel_flight_experience_and_booking_payloads():
     assert card["type"] == "confirmation"
     assert card["property"] == "Summercamp Hotel"
     assert card["total"] == "$1,561"
+    assert card["itinerarySections"] == [
+        {
+            "title": "Hotel",
+            "rows": [
+                {"label": "Property", "value": "Summercamp Hotel"},
+                {"label": "Stay", "value": "Jul 3 - Jul 6, 2026"},
+                {"label": "Guests", "value": "Two guests · 3 nights"},
+                {"label": "Hotel total", "value": "$735"},
+            ],
+        },
+        {
+            "title": "Flights",
+            "rows": [
+                {"label": "Airline", "value": "JetBlue"},
+                {"label": "Route", "value": "JFK → MVY · Nonstop"},
+                {"label": "Outbound", "value": "Jul 3 · 9:15 AM → 10:05 AM"},
+                {"label": "Return", "value": "Jul 6 · 6:30 PM → 7:25 PM"},
+                {"label": "Flight total", "value": "$636"},
+            ],
+        },
+        {
+            "title": "Activity",
+            "rows": [
+                {"label": "Experience", "value": "Sunset Sailing Cruise"},
+                {"label": "When", "value": "Jul 4 · 2 hours"},
+                {"label": "Where", "value": "Edgartown Harbor"},
+                {"label": "Activity total", "value": "$190"},
+            ],
+        },
+    ]

@@ -90,6 +90,40 @@ def _fmt_dates(check_in: str, check_out: str) -> str:
         return f"{check_in} - {check_out}".strip(" -")
 
 
+def _july4_itinerary_sections() -> list[dict]:
+    """Return the high-fidelity July 4 package details for the confirmation UI."""
+    return [
+        {
+            "title": "Hotel",
+            "rows": [
+                {"label": "Property", "value": "Summercamp Hotel"},
+                {"label": "Stay", "value": "Jul 3 - Jul 6, 2026"},
+                {"label": "Guests", "value": "Two guests · 3 nights"},
+                {"label": "Hotel total", "value": "$735"},
+            ],
+        },
+        {
+            "title": "Flights",
+            "rows": [
+                {"label": "Airline", "value": "JetBlue"},
+                {"label": "Route", "value": "JFK → MVY · Nonstop"},
+                {"label": "Outbound", "value": "Jul 3 · 9:15 AM → 10:05 AM"},
+                {"label": "Return", "value": "Jul 6 · 6:30 PM → 7:25 PM"},
+                {"label": "Flight total", "value": "$636"},
+            ],
+        },
+        {
+            "title": "Activity",
+            "rows": [
+                {"label": "Experience", "value": "Sunset Sailing Cruise"},
+                {"label": "When", "value": "Jul 4 · 2 hours"},
+                {"label": "Where", "value": "Edgartown Harbor"},
+                {"label": "Activity total", "value": "$190"},
+            ],
+        },
+    ]
+
+
 def create_booking(
     property_id: str = "",
     room_id: str = "",
@@ -127,6 +161,7 @@ def create_booking(
             "nights": 3,
             "total": "$1,561",
             "status": "Confirmed",
+            "itinerarySections": _july4_itinerary_sections(),
         }
         return {
             "confirmation_number": "BK-4JUL-29571",

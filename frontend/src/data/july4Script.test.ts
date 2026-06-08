@@ -22,8 +22,40 @@ describe('July 4 demo script', () => {
 
     const final = JULY4_SCRIPT.at(-1);
     expect(final?.text).toContain('BK-4JUL-29571');
+    expect(final?.text).toContain('✅');
+    expect(final?.text).not.toContain('✓ A confirmation');
     expect(final?.siteAction?.type).toBe('navigate');
     expect(final?.siteAction?.to).toBe('confirmation');
+    expect(final?.siteAction?.data?.itinerarySections).toEqual([
+      {
+        title: 'Hotel',
+        rows: [
+          { label: 'Property', value: 'Summercamp Hotel' },
+          { label: 'Stay', value: 'Jul 3 - Jul 6, 2026' },
+          { label: 'Guests', value: 'Two guests · 3 nights' },
+          { label: 'Hotel total', value: '$735' },
+        ],
+      },
+      {
+        title: 'Flights',
+        rows: [
+          { label: 'Airline', value: 'JetBlue' },
+          { label: 'Route', value: 'JFK → MVY · Nonstop' },
+          { label: 'Outbound', value: 'Jul 3 · 9:15 AM → 10:05 AM' },
+          { label: 'Return', value: 'Jul 6 · 6:30 PM → 7:25 PM' },
+          { label: 'Flight total', value: '$636' },
+        ],
+      },
+      {
+        title: 'Activity',
+        rows: [
+          { label: 'Experience', value: 'Sunset Sailing Cruise' },
+          { label: 'When', value: 'Jul 4 · 2 hours' },
+          { label: 'Where', value: 'Edgartown Harbor' },
+          { label: 'Activity total', value: '$190' },
+        ],
+      },
+    ]);
   });
 
   it('offers the scripted Martha’s Vineyard choices and checkout total', () => {

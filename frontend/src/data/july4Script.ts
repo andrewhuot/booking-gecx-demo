@@ -1,4 +1,4 @@
-import type { ScriptMessage } from '../lib/types';
+import type { ItinerarySectionData, ScriptMessage } from '../lib/types';
 
 export const JULY4_WARM_START: ScriptMessage = {
   role: 'agent',
@@ -7,6 +7,37 @@ export const JULY4_WARM_START: ScriptMessage = {
   delay: 0,
   capability: 'Warm Start',
 };
+
+const JULY4_CONFIRMED_ITINERARY: ItinerarySectionData[] = [
+  {
+    title: 'Hotel',
+    rows: [
+      { label: 'Property', value: 'Summercamp Hotel' },
+      { label: 'Stay', value: 'Jul 3 - Jul 6, 2026' },
+      { label: 'Guests', value: 'Two guests · 3 nights' },
+      { label: 'Hotel total', value: '$735' },
+    ],
+  },
+  {
+    title: 'Flights',
+    rows: [
+      { label: 'Airline', value: 'JetBlue' },
+      { label: 'Route', value: 'JFK → MVY · Nonstop' },
+      { label: 'Outbound', value: 'Jul 3 · 9:15 AM → 10:05 AM' },
+      { label: 'Return', value: 'Jul 6 · 6:30 PM → 7:25 PM' },
+      { label: 'Flight total', value: '$636' },
+    ],
+  },
+  {
+    title: 'Activity',
+    rows: [
+      { label: 'Experience', value: 'Sunset Sailing Cruise' },
+      { label: 'When', value: 'Jul 4 · 2 hours' },
+      { label: 'Where', value: 'Edgartown Harbor' },
+      { label: 'Activity total', value: '$190' },
+    ],
+  },
+];
 
 export const JULY4_SCRIPT: ScriptMessage[] = [
   {
@@ -246,7 +277,7 @@ export const JULY4_SCRIPT: ScriptMessage[] = [
   {
     role: 'agent',
     text:
-      "You're all set — everything is booked. ✓ A confirmation has been sent to your email with booking reference BK-4JUL-29571.\n\nI'll follow up a few days before your trip with check-in details, a weather update, and a packing suggestion. If anything changes, you can message me here or call our support line anytime. Have a wonderful 250th. 🇺🇸",
+      "You're all set — everything is booked. ✅ A confirmation has been sent to your email with booking reference BK-4JUL-29571.\n\nI'll follow up a few days before your trip with check-in details, a weather update, and a packing suggestion. If anything changes, you can message me here or call our support line anytime. Have a wonderful 250th. 🇺🇸",
     delay: 1100,
     capability: 'Confirmed Booking',
     card: {
@@ -258,6 +289,7 @@ export const JULY4_SCRIPT: ScriptMessage[] = [
       nights: 3,
       total: '$1,561',
       status: 'Confirmed',
+      itinerarySections: JULY4_CONFIRMED_ITINERARY,
     },
     siteAction: {
       type: 'navigate',
@@ -266,8 +298,9 @@ export const JULY4_SCRIPT: ScriptMessage[] = [
         confirmationNumber: 'BK-4JUL-29571',
         property: 'Summercamp Hotel',
         dates: 'Jul 3 - Jul 6, 2026',
-        room: 'JetBlue flights + Sunset Sailing Cruise',
+        room: 'Two guests · 3 nights',
         total: '$1,561',
+        itinerarySections: JULY4_CONFIRMED_ITINERARY,
       },
     },
   },

@@ -118,6 +118,15 @@ def test_booking_payload_maps_to_confirmation_card_and_navigate_with_data() -> N
                 "nights": 3,
                 "total": "$1,017",
                 "status": "Confirmed",
+                "itinerarySections": [
+                    {
+                        "title": "Hotel",
+                        "rows": [
+                            {"label": "Property", "value": "Enchantment Resort"},
+                            {"label": "Stay", "value": "Oct 16 - Oct 19, 2025"},
+                        ],
+                    }
+                ],
             },
         },
     }
@@ -142,6 +151,15 @@ def test_booking_payload_maps_to_confirmation_card_and_navigate_with_data() -> N
         "dates": "Oct 16 - Oct 19, 2025",
         "room": "Canyon View Suite",
         "total": "$1,017",
+        "itinerarySections": [
+            {
+                "title": "Hotel",
+                "rows": [
+                    {"label": "Property", "value": "Enchantment Resort"},
+                    {"label": "Stay", "value": "Oct 16 - Oct 19, 2025"},
+                ],
+            }
+        ],
     }
 
 

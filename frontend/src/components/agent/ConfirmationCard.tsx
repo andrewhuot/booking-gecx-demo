@@ -1,6 +1,7 @@
 import type {
   ConfirmationCardData,
   ConfirmationUpdateCardData,
+  ItinerarySectionData,
 } from '../../lib/types';
 
 interface ConfirmationCardProps {
@@ -11,11 +12,30 @@ interface ConfirmationCardProps {
 
 function Row({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 py-0.5">
+    <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-3 py-0.5">
       <span className="text-meta text-bc-gray-500">{label}</span>
-      <span className="text-right text-meta font-medium text-bc-gray-900">
+      <span className="min-w-0 text-right text-meta font-medium text-bc-gray-900">
         {value}
       </span>
+    </div>
+  );
+}
+
+function ItinerarySections({ sections }: { sections: ItinerarySectionData[] }) {
+  return (
+    <div className="mt-3 space-y-3">
+      {sections.map((section) => (
+        <section key={section.title} aria-label={section.title}>
+          <h4 className="text-[11px] font-bold uppercase tracking-wide text-bc-gray-500">
+            {section.title}
+          </h4>
+          <div className="mt-1 space-y-0.5">
+            {section.rows.map((row) => (
+              <Row key={`${section.title}-${row.label}`} label={row.label} value={row.value} />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
@@ -85,13 +105,16 @@ export function ConfirmationCard({ data, update }: ConfirmationCardProps) {
           </div>
         </div>
 
-        {/* Detail rows */}
-        <div className="mt-2 space-y-0.5">
-          <Row label="Property" value={data.property} />
-          <Row label="Dates" value={data.dates} />
-          <Row label="Room" value={data.room} />
-          <Row label="Nights" value={data.nights} />
-        </div>
+        {data.itinerarySections?.length ? (
+          <ItinerarySections sections={data.itinerarySections} />
+        ) : (
+          <div className="mt-2 space-y-0.5">
+            <Row label="Property" value={data.property} />
+            <Row label="Dates" value={data.dates} />
+            <Row label="Room" value={data.room} />
+            <Row label="Nights" value={data.nights} />
+          </div>
+        )}
 
         {/* Total */}
         <div className="mt-2 flex items-baseline justify-between border-t border-bc-gray-200 pt-2">

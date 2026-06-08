@@ -62,6 +62,17 @@ export interface ConfirmationCardData {
   nights: number;
   total: string;
   status: string;
+  itinerarySections?: ItinerarySectionData[];
+}
+
+export interface ItineraryRowData {
+  label: string;
+  value: string;
+}
+
+export interface ItinerarySectionData {
+  title: string;
+  rows: ItineraryRowData[];
 }
 
 export interface UpsellCardData {
@@ -161,6 +172,7 @@ export interface BookingData {
   dates: string;
   room: string;
   total: string;
+  itinerarySections?: ItinerarySectionData[];
   addOn?: string;
   addOnPrice?: string;
 }
