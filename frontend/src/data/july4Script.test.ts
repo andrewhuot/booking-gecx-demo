@@ -31,6 +31,7 @@ describe('July 4 demo script', () => {
       expect(destinationTurn.card.options.map((option) => option.title)).toContain(
         "Martha's Vineyard, MA",
       );
+      expect(destinationTurn.card.options[0].replyText).toBe("Let's go with the Vineyard!");
     }
 
     const flightTurn = JULY4_SCRIPT.find(

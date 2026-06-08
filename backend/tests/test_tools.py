@@ -207,6 +207,7 @@ def test_july4_destination_search_returns_choice_group_payload():
         "Kennebunkport, ME",
     ]
     assert card["options"][0]["price"] == "~$1,600"
+    assert card["options"][0]["replyText"] == "Let's go with the Vineyard!"
 
 
 def test_july4_hotel_flight_experience_and_booking_payloads():

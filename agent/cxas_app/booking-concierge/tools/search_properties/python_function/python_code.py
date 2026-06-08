@@ -64,7 +64,7 @@ _JULY4_DESTINATIONS = [
         "meta": "30-min flight from NYC or ~5hr drive",
         "price": "~$1,600",
         "description": "Classic New England coastline, charming villages, seafood shacks, and calm beaches. Easy to reach and perfect for a relaxed long weekend without the flight hassle.",
-        "replyText": "Let's do the Vineyard — easy trip and we love it there",
+        "replyText": "Let's go with the Vineyard!",
     },
     {
         "id": "outer-banks",

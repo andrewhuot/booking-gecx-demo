@@ -296,7 +296,7 @@ describe('demoStore — July 4 turnkey demo', () => {
       'Allow location',
       '2 people',
       'Beach & coast',
-      "Let's do the Vineyard — easy trip and we love it there",
+      "Let's go with the Vineyard!",
       'This one — looks fun and the price is right',
       'JetBlue for sure',
       'The sunset cruise on July 4th sounds amazing, let’s do it',
