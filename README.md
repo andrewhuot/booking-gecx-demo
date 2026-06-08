@@ -279,9 +279,24 @@ restricted/private package index that does not mirror FastAPI. Check:
 python3 -m pip config list
 ```
 
-Either allow PyPI for this install or ask your package-index admin to mirror
+You do not have to edit that config. To bypass it for this setup run only, use:
+
+```bash
+./scripts/bootstrap_new_project.sh \
+  --project-id YOUR_PROJECT_ID \
+  --backend-installer pip \
+  --ignore-pip-config \
+  --pip-index-url https://pypi.org/simple
+```
+
+That temporarily sets `PIP_CONFIG_FILE=/dev/null` for backend dependency
+installs and passes `--index-url https://pypi.org/simple` to pip. It does not
+change your global/user pip config.
+
+If your machine cannot reach PyPI either, ask your package-index admin to mirror
 `fastapi`, `uvicorn`, `pydantic`, `python-dotenv`, `pytest`, and the GitHub
-source package `GoogleCloudPlatform/cxas-scrapi`.
+source package `GoogleCloudPlatform/cxas-scrapi`, or build/copy a wheelhouse
+from another machine with PyPI access.
 
 The repo assumes a faster project and defaults to:
 

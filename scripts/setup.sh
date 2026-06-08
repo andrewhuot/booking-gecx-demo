@@ -12,6 +12,8 @@
 set -euo pipefail
 
 BACKEND_INSTALLER="${BOOKING_DEMO_BACKEND_INSTALLER:-auto}"
+PIP_INDEX_URL_OVERRIDE="${BOOKING_DEMO_PIP_INDEX_URL:-}"
+IGNORE_PIP_CONFIG="${BOOKING_DEMO_IGNORE_PIP_CONFIG:-0}"
 DRY_RUN=0
 
 usage() {
@@ -24,6 +26,10 @@ Provision the Python backend environment for the Booking.com GECX demo.
 Options:
   --backend-installer auto|uv|pip   Backend installer to use. auto prefers uv
                                     and falls back to Python venv + pip.
+  --pip-index-url URL               Use this package index for pip installs
+                                    during this run only.
+  --ignore-pip-config               Ignore user/global pip config for backend
+                                    dependency installs during this run.
   --dry-run                         Print the selected install commands only.
   -h, --help                        Show this help.
 EOF
@@ -51,6 +57,19 @@ while [[ $# -gt 0 ]]; do
       ;;
     --backend-installer=*)
       BACKEND_INSTALLER="${1#*=}"
+      shift
+      ;;
+    --pip-index-url)
+      need_value "$1" "${2:-}"
+      PIP_INDEX_URL_OVERRIDE="$2"
+      shift 2
+      ;;
+    --pip-index-url=*)
+      PIP_INDEX_URL_OVERRIDE="${1#*=}"
+      shift
+      ;;
+    --ignore-pip-config)
+      IGNORE_PIP_CONFIG=1
       shift
       ;;
     --dry-run)
@@ -90,6 +109,12 @@ MIN_PYTHON_MINOR=10
 echo "==> Booking.com GECX demo — backend setup"
 echo "    repo: ${REPO_ROOT}"
 echo "==> backend installer: ${BACKEND_INSTALLER}"
+if [[ "${IGNORE_PIP_CONFIG}" == "1" ]]; then
+  echo "==> ignoring pip config for backend dependency installs"
+fi
+if [[ -n "${PIP_INDEX_URL_OVERRIDE}" ]]; then
+  echo "==> pip index override: ${PIP_INDEX_URL_OVERRIDE}"
+fi
 
 run_cmd() {
   printf '  $'
@@ -98,6 +123,29 @@ run_cmd() {
   if [[ "${DRY_RUN}" -eq 0 ]]; then
     "$@"
   fi
+}
+
+run_pip_cmd() {
+  if [[ "${IGNORE_PIP_CONFIG}" == "1" ]]; then
+    printf '  $ PIP_CONFIG_FILE=/dev/null'
+    printf ' %q' "$@"
+    printf '\n'
+    if [[ "${DRY_RUN}" -eq 0 ]]; then
+      PIP_CONFIG_FILE=/dev/null "$@"
+    fi
+    return
+  fi
+
+  run_cmd "$@"
+}
+
+run_pip_install() {
+  if [[ -n "${PIP_INDEX_URL_OVERRIDE}" ]]; then
+    run_pip_cmd "${VENV_PY}" -m pip install --index-url "${PIP_INDEX_URL_OVERRIDE}" "$@"
+    return
+  fi
+
+  run_pip_cmd "${VENV_PY}" -m pip install "$@"
 }
 
 find_python() {
@@ -194,10 +242,9 @@ else
   if [[ "${DRY_RUN}" -eq 0 && ! -x "${VENV_PY}" ]]; then
     die "venv python was not created at ${VENV_PY}."
   fi
-  run_cmd "${VENV_PY}" -m ensurepip --upgrade
-  run_cmd "${VENV_PY}" -m pip install --upgrade pip
-  run_cmd "${VENV_PY}" -m pip install \
-    fastapi "uvicorn[standard]" pydantic python-dotenv pytest
+  run_pip_cmd "${VENV_PY}" -m ensurepip --upgrade
+  run_pip_install --upgrade pip
+  run_pip_install fastapi "uvicorn[standard]" pydantic python-dotenv pytest
 fi
 
 # --- 4. Install cxas-scrapi from GitHub source (NOT on PyPI) -------------------
@@ -211,8 +258,7 @@ if [[ "${SELECTED_INSTALLER}" == "uv" ]]; then
     echo "         (the SDK is imported lazily). Live mode needs it — retry later." >&2
   fi
 else
-  if run_cmd "${VENV_PY}" -m pip install \
-       "git+https://github.com/GoogleCloudPlatform/cxas-scrapi.git"; then
+  if run_pip_install "git+https://github.com/GoogleCloudPlatform/cxas-scrapi.git"; then
     echo "    cxas-scrapi installed."
   else
     echo "WARNING: cxas-scrapi install failed. The API and unit tests still work" >&2

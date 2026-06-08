@@ -22,6 +22,8 @@ PROVISION_AGENT=0
 DRY_RUN_PROVISION=0
 PREPARE_GCP=0
 BACKEND_INSTALLER="auto"
+PIP_INDEX_URL_OVERRIDE=""
+IGNORE_PIP_CONFIG=0
 
 PROJECT_ID=""
 PROJECT_NUMBER=""
@@ -69,6 +71,8 @@ Options:
   --frontend-port VALUE     Frontend port. Defaults to first free: 3000, 3001, 5173.
   --backend-port VALUE      Backend port. Defaults to first free: 8000, 8001, 8002.
   --backend-installer VALUE Backend installer: auto, uv, or pip. Use pip if uv is blocked.
+  --pip-index-url VALUE     Use this pip index URL for backend setup during this run.
+  --ignore-pip-config       Ignore user/global pip config during backend setup.
   --skip-install            Do not run setup.sh or npm install before launch.
   --setup-only              Install/configure/provision, then exit without servers.
   --no-open                 Print the URL instead of opening the browser.
@@ -188,6 +192,15 @@ while [[ $# -gt 0 ]]; do
       need_value "$1" "${2:-}"
       BACKEND_INSTALLER="$2"
       shift 2
+      ;;
+    --pip-index-url)
+      need_value "$1" "${2:-}"
+      PIP_INDEX_URL_OVERRIDE="$2"
+      shift 2
+      ;;
+    --ignore-pip-config)
+      IGNORE_PIP_CONFIG=1
+      shift
       ;;
     --skip-install)
       SKIP_INSTALL=1
@@ -333,7 +346,10 @@ install_dependencies() {
     return
   fi
 
-  ./scripts/setup.sh --backend-installer "${BACKEND_INSTALLER}"
+  local setup_args=(--backend-installer "${BACKEND_INSTALLER}")
+  [[ -n "${PIP_INDEX_URL_OVERRIDE}" ]] && setup_args+=(--pip-index-url "${PIP_INDEX_URL_OVERRIDE}")
+  [[ "${IGNORE_PIP_CONFIG}" -eq 1 ]] && setup_args+=(--ignore-pip-config)
+  ./scripts/setup.sh "${setup_args[@]}"
 
   if ! command -v npm >/dev/null 2>&1; then
     die "npm is not installed or not on PATH. Install Node 18+ and re-run."

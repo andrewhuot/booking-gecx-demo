@@ -57,6 +57,8 @@ def test_turnkey_launcher_help_explains_modes_routes_and_live_provisioning():
     assert "--agent-zip" in result.stdout
     assert "--deployment-id" in result.stdout
     assert "--backend-installer" in result.stdout
+    assert "--pip-index-url" in result.stdout
+    assert "--ignore-pip-config" in result.stdout
     assert "/google" in result.stdout
     assert "/google/live" in result.stdout
     assert "VITE_API_URL" in result.stdout
@@ -152,6 +154,8 @@ def test_bootstrap_new_project_help_describes_repo_and_zip_paths():
     assert "--project-id YOUR_PROJECT_ID" in result.stdout
     assert "--agent-zip" in result.stdout
     assert "--backend-installer" in result.stdout
+    assert "--pip-index-url" in result.stdout
+    assert "--ignore-pip-config" in result.stdout
     assert "new computer" in result.stdout.lower()
 
 
@@ -168,6 +172,29 @@ def test_setup_script_supports_pip_installer_dry_run():
     assert "backend installer: pip" in result.stdout
     assert "using Python venv + pip backend installer" in result.stdout
     assert "python -m venv" in result.stdout
+
+
+def test_setup_script_can_ignore_pip_config_and_use_public_index():
+    """A locked pip config can be bypassed for this one setup command."""
+    result = subprocess.run(
+        [
+            str(SETUP_SCRIPT),
+            "--dry-run",
+            "--backend-installer",
+            "pip",
+            "--ignore-pip-config",
+            "--pip-index-url",
+            "https://pypi.org/simple",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert "ignoring pip config for backend dependency installs" in result.stdout
+    assert "PIP_CONFIG_FILE=/dev/null" in result.stdout
+    assert "--index-url https://pypi.org/simple" in result.stdout
 
 
 def test_setup_script_auto_falls_back_to_pip_when_uv_is_missing(tmp_path):
