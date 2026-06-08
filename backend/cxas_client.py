@@ -21,6 +21,7 @@ errors with backoff before surfacing a friendly :class:`CXASUnavailable`.
 
 from __future__ import annotations
 
+import re
 import time
 import uuid
 from typing import Any
@@ -83,20 +84,26 @@ def _humanize_error(exc: BaseException) -> str:
 def _dedupe_agent_text(text: str) -> str:
     """Collapse the doubled agent text CES/get_structured_response can return.
 
-    ``ParsedSessionResponse`` joins ``agent_texts`` with a space, and CES often
-    reports the final reply twice (a streamed chunk + the final output), yielding
-    ``"X X"``. If the text is exactly two identical halves split on a single
-    space boundary, return one half. Otherwise return the text unchanged.
+    ``ParsedSessionResponse`` joins ``agent_texts``, and CES often reports the
+    final reply twice (a streamed chunk + the final output), yielding strings
+    like ``"X X"`` or ``"X\n X"``. If the text is exactly two identical halves
+    separated by whitespace, return one half. Otherwise return it unchanged.
     """
     if not text:
         return text
     stripped = text.strip()
-    # Try splitting into two equal halves around the midpoint separator space.
-    mid = len(stripped) // 2
-    if len(stripped) % 2 == 1 and stripped[mid] == " ":
-        first, second = stripped[:mid], stripped[mid + 1:]
-        if first == second and first:
+
+    def normalized(value: str) -> str:
+        return " ".join(value.split())
+
+    # Split on each whitespace run and compare the normalized halves. This keeps
+    # the original first copy, but tolerates CES joining duplicates with newlines.
+    for separator in re.finditer(r"\s+", stripped):
+        first = stripped[: separator.start()].strip()
+        second = stripped[separator.end() :].strip()
+        if first and second and normalized(first) == normalized(second):
             return first
+
     return text
 
 

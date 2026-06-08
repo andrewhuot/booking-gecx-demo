@@ -102,6 +102,12 @@ def test_dedupe_handles_empty_and_whitespace():
     assert _dedupe_agent_text("hello world hello world") == "hello world"
 
 
+def test_dedupe_collapses_doubled_text_with_newline_separator():
+    half = "Perfect, New York City. And how many travelers will there be?"
+    doubled = f"{half}\n {half}"
+    assert _dedupe_agent_text(doubled) == half
+
+
 def test_start_session_passes_configured_deployment_id(monkeypatch):
     calls = []
 
