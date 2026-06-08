@@ -33,6 +33,16 @@ describe('July 4 demo script', () => {
       );
     }
 
+    const flightTurn = JULY4_SCRIPT.find(
+      (message) => message.card?.type === 'choice_group' && message.card.variant === 'flight',
+    );
+    expect(flightTurn?.card?.type).toBe('choice_group');
+    if (flightTurn?.card?.type === 'choice_group') {
+      const capeAir = flightTurn.card.options.find((option) => option.id === 'cape-air');
+      expect(capeAir?.subtitle).toBe('JFK → BOS → MVY · 1 stop');
+      expect(capeAir?.description).toContain('Boston');
+    }
+
     const finalSummary = JULY4_SCRIPT.find(
       (message) => message.card?.type === 'cost_summary' && message.card.total === '$1,561',
     );

@@ -79,10 +79,10 @@ _JULY4_OPTIONS = {
             {
                 "id": "cape-air",
                 "title": "Cape Air",
-                "subtitle": "BOS → MVY · Nonstop",
-                "meta": "Depart 11:00 AM → Arrive 11:35 AM · Return 4:45 PM → 5:20 PM",
+                "subtitle": "JFK → BOS → MVY · 1 stop",
+                "meta": "Depart 9:30 AM → Arrive 11:35 AM · Return 4:45 PM → 7:20 PM",
                 "price": "$248/person · $496 total for 2",
-                "description": "A bit less, but you'd need to connect through Boston first.",
+                "description": "A bit less, but you connect through Boston before the short Cape Air hop to MVY.",
                 "replyText": "Cape Air is fine",
             },
         ],

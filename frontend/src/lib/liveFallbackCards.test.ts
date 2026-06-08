@@ -49,6 +49,24 @@ describe('withLiveFallbackCard', () => {
     expect(message.text).not.toContain("I've found a few hotels for you there");
   });
 
+  it('formats the live flight options as bold logical bullets', () => {
+    const message = withLiveFallbackCard(
+      liveAgentMessage(
+        "Excellent choice! The Summercamp Hotel is a fantastic option for a fun and stylish stay.\n\n" +
+          "Now, let's look at flights from New York City to Martha's Vineyard for those dates. I've found two options for you:\n\n" +
+          "There's a nonstop JetBlue flight from JFK that's under an hour each way, costing $636 for two people. Alternatively, Cape Air is a bit less expensive at $496 for two, but it requires a connection through Boston.\n\n" +
+          'Which flight option works best for you?',
+      ),
+      'july4',
+    );
+
+    expect(message.text).toContain('- **JetBlue nonstop:** JFK → MVY');
+    expect(message.text).toContain('- **Cape Air via Boston:** JFK → BOS → MVY');
+    expect(message.text).toContain('**$636 total for 2**');
+    expect(message.text).toContain('**$496 total for 2**');
+    expect(message.text).not.toContain("There's a nonstop JetBlue flight");
+  });
+
   it('adds traveler chips when a July 4 live reply asks for party size without cards', () => {
     const message = withLiveFallbackCard(
       liveAgentMessage(
@@ -111,6 +129,39 @@ describe('withLiveFallbackCard', () => {
     );
 
     expect(message.card).toBe(existingCard);
+  });
+
+  it('normalizes the Cape Air live flight card to show the Boston connection from JFK', () => {
+    const card: ChoiceGroupCardData = {
+      type: 'choice_group',
+      variant: 'flight',
+      title: "NYC to Martha's Vineyard flights",
+      layout: 'cards',
+      options: [
+        {
+          id: 'cape-air',
+          title: 'Cape Air',
+          subtitle: 'BOS → MVY · Nonstop',
+          meta: 'Depart 11:00 AM → Arrive 11:35 AM · Return 4:45 PM → 5:20 PM',
+          price: '$248/person · $496 total for 2',
+          description: "A bit less, but you'd need to connect through Boston first.",
+          replyText: 'Cape Air is fine',
+        },
+      ],
+    };
+
+    const message = withLiveFallbackCard(
+      {
+        ...liveAgentMessage('Which flight option works best?'),
+        card,
+      },
+      'july4',
+    );
+
+    const normalizedCard = asChoiceGroup(message);
+    expect(normalizedCard.options[0].subtitle).toBe('JFK → BOS → MVY · 1 stop');
+    expect(normalizedCard.options[0].description).toContain('Boston');
+    expect(normalizedCard.options[0].description).toContain('Cape Air hop');
   });
 
   it('does not add July 4 chips to other scenarios', () => {

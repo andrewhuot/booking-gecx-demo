@@ -220,6 +220,10 @@ def test_july4_hotel_flight_experience_and_booking_payloads():
     flights = availability.check_availability(stage="flights", destination_id="marthas-vineyard")
     assert flights["payload"]["card"]["variant"] == "flight"
     assert flights["payload"]["card"]["options"][0]["title"] == "JetBlue"
+    cape_air = flights["payload"]["card"]["options"][1]
+    assert cape_air["title"] == "Cape Air"
+    assert cape_air["subtitle"] == "JFK → BOS → MVY · 1 stop"
+    assert "Boston" in cape_air["description"]
 
     experiences = availability.check_availability(stage="experiences", destination_id="marthas-vineyard")
     assert experiences["payload"]["card"]["variant"] == "experience"

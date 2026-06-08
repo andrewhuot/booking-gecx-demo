@@ -59,6 +59,16 @@ function isMarthasVineyardHotelIntro(text: string): boolean {
   );
 }
 
+function isFlightOptionsText(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return (
+    normalized.includes('summercamp hotel') &&
+    normalized.includes('jetblue') &&
+    normalized.includes('cape air') &&
+    normalized.includes('connection through boston')
+  );
+}
+
 function polishLiveMessageText(message: ScriptMessage, scenario: ScenarioId): ScriptMessage {
   if (scenario !== 'july4' || message.role !== 'agent' || !message.text) {
     return message;
@@ -85,7 +95,56 @@ function polishLiveMessageText(message: ScriptMessage, scenario: ScenarioId): Sc
     };
   }
 
+  if (isFlightOptionsText(message.text)) {
+    return {
+      ...message,
+      text:
+        '**Summercamp Hotel** is a great fit for a fun, stylish stay.\n\n' +
+        "For flights from New York City to Martha's Vineyard, I found two good options:\n\n" +
+        '- **JetBlue nonstop:** JFK → MVY, under an hour each way, **$636 total for 2**.\n' +
+        '- **Cape Air via Boston:** JFK → BOS → MVY, **$496 total for 2**. It is a bit cheaper, but adds the Boston connection.\n\n' +
+        'Which flight option works best?',
+    };
+  }
+
   return message;
+}
+
+function normalizeLiveCard(message: ScriptMessage, scenario: ScenarioId): ScriptMessage {
+  if (
+    scenario !== 'july4' ||
+    message.card?.type !== 'choice_group' ||
+    message.card.variant !== 'flight'
+  ) {
+    return message;
+  }
+
+  let changed = false;
+  const options = message.card.options.map((option) => {
+    if (option.id !== 'cape-air' && option.title !== 'Cape Air') {
+      return option;
+    }
+
+    changed = true;
+    return {
+      ...option,
+      subtitle: 'JFK → BOS → MVY · 1 stop',
+      meta: 'Depart 9:30 AM → Arrive 11:35 AM · Return 4:45 PM → 7:20 PM',
+      description: 'A bit less, but you connect through Boston before the short Cape Air hop to MVY.',
+    };
+  });
+
+  if (!changed) {
+    return message;
+  }
+
+  return {
+    ...message,
+    card: {
+      ...message.card,
+      options,
+    },
+  };
 }
 
 export function getLiveFastPathMessage(
@@ -103,7 +162,7 @@ export function getLiveFastPathMessage(
 }
 
 export function withLiveFallbackCard(message: ScriptMessage, scenario: ScenarioId): ScriptMessage {
-  const polishedMessage = polishLiveMessageText(message, scenario);
+  const polishedMessage = normalizeLiveCard(polishLiveMessageText(message, scenario), scenario);
 
   if (scenario !== 'july4' || polishedMessage.role !== 'agent' || polishedMessage.card) {
     return polishedMessage;
