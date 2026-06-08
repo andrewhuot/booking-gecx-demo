@@ -71,13 +71,23 @@ function isFlightOptionsText(text: string): boolean {
 
 function isExperienceUpsellText(text: string): boolean {
   const normalized = text.toLowerCase();
+  const mentionsBudgetRoom = (
+    normalized.includes('remaining budget') ||
+    normalized.includes('under budget') ||
+    (normalized.includes('$629') && normalized.includes('$2,000'))
+  );
+  const mentionsExperienceOffer = (
+    normalized.includes('sunset sailing') ||
+    normalized.includes('bike') ||
+    normalized.includes('would you like to add an experience') ||
+    normalized.includes('holiday weekend')
+  );
+
   return (
     normalized.includes('jetblue') &&
     normalized.includes('summercamp hotel') &&
-    normalized.includes('remaining budget') &&
-    normalized.includes('sunset sailing') &&
-    normalized.includes('bike') &&
-    normalized.includes('wine')
+    mentionsBudgetRoom &&
+    mentionsExperienceOffer
   );
 }
 
